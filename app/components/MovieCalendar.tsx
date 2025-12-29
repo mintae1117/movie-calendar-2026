@@ -35,10 +35,9 @@ import {
 import MovieModal from "./MovieModal";
 import Footer from "./Footer";
 
-// ============ Styled Components ============
-
 const Container = styled.div`
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
 `;
@@ -107,8 +106,6 @@ const LegendLabel = styled.span<{ $theme: Theme }>`
 `;
 
 const CalendarContainer = styled.div<{ $theme: Theme }>`
-  flex: 1;
-  min-height: 0;
   background-color: ${(props) => themeColors[props.$theme].calendarBg};
   border-radius: 0.5rem;
   box-shadow: ${(props) => themeColors[props.$theme].calendarShadow};
@@ -200,12 +197,9 @@ const WeekdayCell = styled.div<{
 `;
 
 const CalendarGrid = styled.div`
-  flex: 1;
-  min-height: 0;
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  grid-auto-rows: 1fr;
-  overflow: hidden;
+  grid-auto-rows: minmax(100px, 120px);
 `;
 
 const DayCell = styled.div<{
