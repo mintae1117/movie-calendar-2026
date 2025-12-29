@@ -18,6 +18,7 @@ import { ko } from "date-fns/locale";
 import { Tooltip } from "react-tooltip";
 import { FaStar } from "react-icons/fa";
 import { Movie, getUpcomingMovies, getPosterUrl } from "../lib/tmdb";
+import { isRecommended } from "../lib/recommendedMovies";
 import MovieModal from "./MovieModal";
 
 // ============ Styled Components ============
@@ -282,26 +283,6 @@ interface CalendarEvent {
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
-const RECOMMENDED_MOVIES = [
-  "28년 후: 뼈의 사원",
-  "28 Years Later: The Bone Temple",
-  "프로젝트 Y",
-  "Project Y",
-  "노 머시: 90분",
-  "No Mercy: 90 Minutes",
-  "어벤져스: 둠스데이",
-  "Avengers: Doomsday",
-  "듄: 파트 3",
-  "Dune: Part Three",
-];
-
-const isRecommended = (movie: Movie): boolean => {
-  return (
-    RECOMMENDED_MOVIES.includes(movie.title) ||
-    RECOMMENDED_MOVIES.includes(movie.original_title)
-  );
-};
-
 const getDayType = (dayOfWeek: number): "sunday" | "saturday" | "weekday" => {
   if (dayOfWeek === 0) return "sunday";
   if (dayOfWeek === 6) return "saturday";
@@ -374,6 +355,18 @@ export default function MovieCalendar() {
       }
       grouped.get(dateKey)!.push(event);
     });
+
+    // 각 날짜별로 추천 영화를 최상단에 정렬
+    grouped.forEach((dayEvents, dateKey) => {
+      dayEvents.sort((a, b) => {
+        const aRecommended = isRecommended(a.movie);
+        const bRecommended = isRecommended(b.movie);
+        if (aRecommended && !bRecommended) return -1;
+        if (!aRecommended && bRecommended) return 1;
+        return 0;
+      });
+    });
+
     return grouped;
   }, [events]);
 
