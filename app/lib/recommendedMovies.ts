@@ -9,6 +9,8 @@ export const RECOMMENDED_MOVIES = [
   // 2026-01-14
   "28년 후: 뼈의 사원",
   "28 Years Later: The Bone Temple",
+  "프로젝트 Y",
+  "Project Y",
   // 2026-01-22
   "노 머시: 90분",
   "Mercy",
