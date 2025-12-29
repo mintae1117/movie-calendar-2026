@@ -67,6 +67,8 @@ export const RECOMMENDED_MOVIES = [
   "스파이더맨: 브랜드 뉴 데이",
   "Spider-Man: Brand New Day",
   // 2026-09-16
+  "인시디어스: 더 블리딩 월드",
+  "Insidious: The Bleeding World",
   "레지던트 이블",
   "Resident Evil",
   // 2026-09-30
