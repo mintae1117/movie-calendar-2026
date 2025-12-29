@@ -8,14 +8,16 @@ import {
   getMovieDetails,
   getPosterUrl,
   getBackdropUrl,
+  ApiLanguage,
 } from "../lib/tmdb";
+import { useSettingsStore, themeColors, Theme } from "../lib/store";
 
 // ============ Styled Components ============
 
-const Overlay = styled.div`
+const Overlay = styled.div<{ $theme: Theme }>`
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: ${(props) => themeColors[props.$theme].modalOverlay};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -23,14 +25,15 @@ const Overlay = styled.div`
   padding: 1rem;
 `;
 
-const ModalContainer = styled.div`
-  background-color: white;
+const ModalContainer = styled.div<{ $theme: Theme }>`
+  background-color: ${(props) => themeColors[props.$theme].modalBg};
   border-radius: 1rem;
   max-width: 48rem;
   width: 100%;
   max-height: 90vh;
   overflow: hidden;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 1px solid ${(props) => themeColors[props.$theme].calendarBorder};
 `;
 
 const BackdropContainer = styled.div`
@@ -68,11 +71,11 @@ const PosterContainer = styled.div`
   z-index: 20;
 `;
 
-const PosterImage = styled.img`
+const PosterImage = styled.img<{ $theme: Theme }>`
   width: 7rem;
   border-radius: 0.5rem;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  border: 4px solid white;
+  border: 4px solid ${(props) => themeColors[props.$theme].modalBg};
 
   @media (min-width: 768px) {
     width: 9rem;
@@ -116,21 +119,21 @@ const TitleArea = styled.div`
   }
 `;
 
-const Title = styled.h2`
+const Title = styled.h2<{ $theme: Theme }>`
   font-size: 1.5rem;
   font-weight: 700;
-  color: #111827;
+  color: ${(props) => themeColors[props.$theme].textPrimary};
   margin-bottom: 0.25rem;
 `;
 
-const OriginalTitle = styled.p`
-  color: #6b7280;
+const OriginalTitle = styled.p<{ $theme: Theme }>`
+  color: ${(props) => themeColors[props.$theme].textMuted};
   font-size: 0.875rem;
   margin-bottom: 0.5rem;
 `;
 
-const Tagline = styled.p`
-  color: #4b5563;
+const Tagline = styled.p<{ $theme: Theme }>`
+  color: ${(props) => themeColors[props.$theme].textSecondary};
   font-style: italic;
   margin-bottom: 0.75rem;
 `;
@@ -150,7 +153,10 @@ const BadgeContainer = styled.div`
   margin-bottom: 1rem;
 `;
 
-const Badge = styled.span<{ $variant: "date" | "runtime" | "rating" }>`
+const Badge = styled.span<{
+  $variant: "date" | "runtime" | "rating";
+  $theme: Theme;
+}>`
   padding: 0.25rem 0.75rem;
   border-radius: 9999px;
   font-size: 0.875rem;
@@ -159,22 +165,23 @@ const Badge = styled.span<{ $variant: "date" | "runtime" | "rating" }>`
   gap: 0.25rem;
 
   ${(props) => {
+    const isDark = props.$theme === "dark";
     switch (props.$variant) {
       case "date":
         return `
-          background-color: #dbeafe;
-          color: #1e40af;
+          background-color: ${isDark ? "#1e3a5f" : "#dbeafe"};
+          color: ${isDark ? "#93c5fd" : "#1e40af"};
           font-weight: 500;
         `;
       case "runtime":
         return `
-          background-color: #f3f4f6;
-          color: #374151;
+          background-color: ${isDark ? "#374151" : "#f3f4f6"};
+          color: ${isDark ? "#d1d5db" : "#374151"};
         `;
       case "rating":
         return `
-          background-color: #fef3c7;
-          color: #92400e;
+          background-color: ${isDark ? "#422006" : "#fef3c7"};
+          color: ${isDark ? "#fcd34d" : "#92400e"};
         `;
     }
   }}
@@ -187,10 +194,11 @@ const GenreContainer = styled.div`
   margin-bottom: 1rem;
 `;
 
-const GenreBadge = styled.span`
+const GenreBadge = styled.span<{ $theme: Theme }>`
   padding: 0.25rem 0.5rem;
-  background-color: #f3e8ff;
-  color: #7c3aed;
+  background-color: ${(props) =>
+    props.$theme === "dark" ? "#3b0764" : "#f3e8ff"};
+  color: ${(props) => (props.$theme === "dark" ? "#c4b5fd" : "#7c3aed")};
   border-radius: 0.25rem;
   font-size: 0.75rem;
 `;
@@ -199,15 +207,15 @@ const Section = styled.div`
   margin-top: 1rem;
 `;
 
-const SectionTitle = styled.h3`
+const SectionTitle = styled.h3<{ $theme: Theme }>`
   font-size: 1.125rem;
   font-weight: 600;
-  color: #111827;
+  color: ${(props) => themeColors[props.$theme].textPrimary};
   margin-bottom: 0.5rem;
 `;
 
-const Overview = styled.p`
-  color: #4b5563;
+const Overview = styled.p<{ $theme: Theme }>`
+  color: ${(props) => themeColors[props.$theme].textSecondary};
   line-height: 1.625;
 `;
 
@@ -224,14 +232,19 @@ const CompanyItem = styled.div`
   gap: 0.5rem;
 `;
 
-const CompanyLogo = styled.img`
+const CompanyLogo = styled.img<{ $theme: Theme }>`
   height: 1.5rem;
   object-fit: contain;
+  ${(props) =>
+    props.$theme === "dark" &&
+    `
+    filter: brightness(0) invert(1);
+  `}
 `;
 
-const CompanyName = styled.span`
+const CompanyName = styled.span<{ $theme: Theme }>`
   font-size: 0.875rem;
-  color: #6b7280;
+  color: ${(props) => themeColors[props.$theme].textMuted};
 `;
 
 const spin = keyframes`
@@ -266,13 +279,16 @@ interface MovieModalProps {
 }
 
 export default function MovieModal({ movie, onClose }: MovieModalProps) {
+  const theme = useSettingsStore((state) => state.theme);
+  const language = useSettingsStore((state) => state.language);
+  const t = useSettingsStore((state) => state.t);
   const [details, setDetails] = useState<MovieDetails | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchDetails = async () => {
       try {
-        const data = await getMovieDetails(movie.id);
+        const data = await getMovieDetails(movie.id, language as ApiLanguage);
         setDetails(data);
       } catch (error) {
         console.error("Failed to fetch movie details:", error);
@@ -282,7 +298,7 @@ export default function MovieModal({ movie, onClose }: MovieModalProps) {
     };
 
     fetchDetails();
-  }, [movie.id]);
+  }, [movie.id, language]);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -294,7 +310,14 @@ export default function MovieModal({ movie, onClose }: MovieModalProps) {
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString("ko-KR", {
+    if (language === "ko") {
+      return date.toLocaleDateString("ko-KR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    }
+    return date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -304,12 +327,15 @@ export default function MovieModal({ movie, onClose }: MovieModalProps) {
   const formatRuntime = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
-    return hours > 0 ? `${hours}시간 ${mins}분` : `${mins}분`;
+    if (language === "ko") {
+      return hours > 0 ? `${hours}시간 ${mins}분` : `${mins}분`;
+    }
+    return hours > 0 ? `${hours}h ${mins}min` : `${mins}min`;
   };
 
   return (
-    <Overlay onClick={onClose}>
-      <ModalContainer onClick={(e) => e.stopPropagation()}>
+    <Overlay $theme={theme} onClick={onClose}>
+      <ModalContainer $theme={theme} onClick={(e) => e.stopPropagation()}>
         <BackdropContainer>
           {movie.backdrop_path ? (
             <BackdropImage src={getBackdropUrl(movie.backdrop_path)} alt="" />
@@ -320,6 +346,7 @@ export default function MovieModal({ movie, onClose }: MovieModalProps) {
 
           <PosterContainer>
             <PosterImage
+              $theme={theme}
               src={getPosterUrl(movie.poster_path, "w342")}
               alt={movie.title}
             />
@@ -346,25 +373,29 @@ export default function MovieModal({ movie, onClose }: MovieModalProps) {
 
         <ContentArea>
           <TitleArea>
-            <Title>{movie.title}</Title>
+            <Title $theme={theme}>{movie.title}</Title>
             {movie.original_title !== movie.title && (
-              <OriginalTitle>{movie.original_title}</OriginalTitle>
+              <OriginalTitle $theme={theme}>
+                {movie.original_title}
+              </OriginalTitle>
             )}
             {details?.tagline && (
-              <Tagline>&ldquo;{details.tagline}&rdquo;</Tagline>
+              <Tagline $theme={theme}>&ldquo;{details.tagline}&rdquo;</Tagline>
             )}
           </TitleArea>
 
           <InfoArea>
             <BadgeContainer>
-              <Badge $variant="date">{formatDate(movie.release_date)}</Badge>
+              <Badge $variant="date" $theme={theme}>
+                {formatDate(movie.release_date)}
+              </Badge>
               {details?.runtime && details.runtime > 0 && (
-                <Badge $variant="runtime">
+                <Badge $variant="runtime" $theme={theme}>
                   {formatRuntime(details.runtime)}
                 </Badge>
               )}
               {movie.vote_average > 0 && (
-                <Badge $variant="rating">
+                <Badge $variant="rating" $theme={theme}>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="16"
@@ -382,32 +413,41 @@ export default function MovieModal({ movie, onClose }: MovieModalProps) {
             {details?.genres && details.genres.length > 0 && (
               <GenreContainer>
                 {details.genres.map((genre) => (
-                  <GenreBadge key={genre.id}>{genre.name}</GenreBadge>
+                  <GenreBadge key={genre.id} $theme={theme}>
+                    {genre.name}
+                  </GenreBadge>
                 ))}
               </GenreContainer>
             )}
 
             {movie.overview && (
               <Section>
-                <SectionTitle>줄거리</SectionTitle>
-                <Overview>{movie.overview}</Overview>
+                <SectionTitle $theme={theme}>
+                  {t("modal.overview")}
+                </SectionTitle>
+                <Overview $theme={theme}>{movie.overview}</Overview>
               </Section>
             )}
 
             {details?.production_companies &&
               details.production_companies.length > 0 && (
                 <Section>
-                  <SectionTitle>제작사</SectionTitle>
+                  <SectionTitle $theme={theme}>
+                    {t("modal.production")}
+                  </SectionTitle>
                   <CompanyContainer>
                     {details.production_companies.slice(0, 5).map((company) => (
                       <CompanyItem key={company.id}>
                         {company.logo_path ? (
                           <CompanyLogo
+                            $theme={theme}
                             src={`https://image.tmdb.org/t/p/w92${company.logo_path}`}
                             alt={company.name}
                           />
                         ) : (
-                          <CompanyName>{company.name}</CompanyName>
+                          <CompanyName $theme={theme}>
+                            {company.name}
+                          </CompanyName>
                         )}
                       </CompanyItem>
                     ))}

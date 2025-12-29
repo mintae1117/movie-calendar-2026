@@ -14,12 +14,26 @@ import {
   isSameMonth,
   isToday,
 } from "date-fns";
-import { ko } from "date-fns/locale";
+import { ko, enUS } from "date-fns/locale";
 import { Tooltip } from "react-tooltip";
 import { FaStar } from "react-icons/fa";
-import { Movie, getUpcomingMovies, getPosterUrl } from "../lib/tmdb";
+import {
+  Movie,
+  getUpcomingMovies,
+  getPosterUrl,
+  ApiLanguage,
+  ApiRegion,
+} from "../lib/tmdb";
 import { isRecommended } from "../lib/recommendedMovies";
+import {
+  useSettingsStore,
+  themeColors,
+  Theme,
+  Region,
+  REGIONS,
+} from "../lib/store";
 import MovieModal from "./MovieModal";
+import Footer from "./Footer";
 
 // ============ Styled Components ============
 
@@ -29,28 +43,32 @@ const Container = styled.div`
   flex-direction: column;
 `;
 
-const Header = styled.div`
+const Header = styled.div<{ $theme: Theme }>`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  flex-shrink: 0;
 `;
 
-const Title = styled.h1`
+const Title = styled.h1<{ $theme: Theme }>`
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1f2937;
+  color: ${(props) => themeColors[props.$theme].textPrimary};
 `;
 
 const HeaderRight = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-wrap: wrap;
 `;
 
-const LoadingText = styled.span`
+const LoadingText = styled.span<{ $theme: Theme }>`
   font-size: 0.875rem;
-  color: #6b7280;
+  color: ${(props) => themeColors[props.$theme].textSecondary};
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 
   @keyframes pulse {
@@ -84,27 +102,29 @@ const LegendDot = styled.div<{ $color: string }>`
   border-radius: 0.25rem;
 `;
 
-const LegendLabel = styled.span`
-  color: #4b5563;
+const LegendLabel = styled.span<{ $theme: Theme }>`
+  color: ${(props) => themeColors[props.$theme].textSecondary};
 `;
 
-const CalendarContainer = styled.div`
+const CalendarContainer = styled.div<{ $theme: Theme }>`
   flex: 1;
   min-height: 0;
-  background-color: white;
+  background-color: ${(props) => themeColors[props.$theme].calendarBg};
   border-radius: 0.5rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  box-shadow: ${(props) => themeColors[props.$theme].calendarShadow};
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  border: 1px solid ${(props) => themeColors[props.$theme].calendarBorder};
 `;
 
-const Toolbar = styled.div`
+const Toolbar = styled.div<{ $theme: Theme }>`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid ${(props) => themeColors[props.$theme].toolbarBorder};
+  flex-shrink: 0;
 `;
 
 const ButtonGroup = styled.div`
@@ -113,60 +133,70 @@ const ButtonGroup = styled.div`
   gap: 0.5rem;
 `;
 
-const NavButton = styled.button`
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  background: white;
-  color: black;
+const NavButton = styled.button<{ $theme: Theme }>`
+  padding: 0.25rem 0.5rem;
+  border: 1px solid ${(props) => themeColors[props.$theme].buttonBorder};
+  border-radius: 0.375rem;
+  background: ${(props) => themeColors[props.$theme].buttonBg};
+  color: ${(props) => themeColors[props.$theme].buttonText};
+  font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s;
 
   &:hover {
-    background-color: #f3f4f6;
+    background-color: ${(props) => themeColors[props.$theme].buttonHover};
   }
 `;
 
-const MonthTitle = styled.h2`
+const MonthTitle = styled.h2<{ $theme: Theme }>`
   font-size: 1.25rem;
   font-weight: 600;
-  color: #1f2937;
+  color: ${(props) => themeColors[props.$theme].textPrimary};
 `;
 
-const Select = styled.select`
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  background: white;
-  color: black;
+const Select = styled.select<{ $theme: Theme }>`
+  padding: 0.25rem 0.5rem;
+  border: 1px solid ${(props) => themeColors[props.$theme].selectBorder};
+  border-radius: 0.375rem;
+  background: ${(props) => themeColors[props.$theme].selectBg};
+  color: ${(props) => themeColors[props.$theme].selectText};
+  font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
 
   &:focus {
     outline: none;
-    ring: 2px solid #3b82f6;
+    border-color: #3b82f6;
+  }
+
+  option {
+    background: ${(props) => themeColors[props.$theme].selectBg};
+    color: ${(props) => themeColors[props.$theme].selectText};
   }
 `;
 
-const WeekdayHeader = styled.div`
+const WeekdayHeader = styled.div<{ $theme: Theme }>`
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid ${(props) => themeColors[props.$theme].dayCellBorder};
 `;
 
-const WeekdayCell = styled.div<{ $dayType: "sunday" | "saturday" | "weekday" }>`
-  padding: 0.75rem;
+const WeekdayCell = styled.div<{
+  $dayType: "sunday" | "saturday" | "weekday";
+  $theme: Theme;
+}>`
+  padding: 0.5rem;
   text-align: center;
   font-size: 0.875rem;
   font-weight: 600;
-  background-color: #f9fafb;
+  background-color: ${(props) => themeColors[props.$theme].weekdayBg};
   color: ${(props) =>
     props.$dayType === "sunday"
       ? "#ef4444"
       : props.$dayType === "saturday"
       ? "#3b82f6"
-      : "#4b5563"};
+      : themeColors[props.$theme].textSecondary};
 `;
 
 const CalendarGrid = styled.div`
@@ -178,22 +208,31 @@ const CalendarGrid = styled.div`
   overflow: hidden;
 `;
 
-const DayCell = styled.div<{ $isCurrentMonth: boolean; $isToday: boolean }>`
-  border-bottom: 1px solid #e5e7eb;
-  border-right: 1px solid #e5e7eb;
+const DayCell = styled.div<{
+  $isCurrentMonth: boolean;
+  $isToday: boolean;
+  $theme: Theme;
+}>`
+  border-bottom: 1px solid ${(props) => themeColors[props.$theme].dayCellBorder};
+  border-right: 1px solid ${(props) => themeColors[props.$theme].dayCellBorder};
   display: flex;
   flex-direction: column;
   min-height: 0;
   min-width: 0;
   overflow: hidden;
   background-color: ${(props) =>
-    props.$isToday ? "#eff6ff" : props.$isCurrentMonth ? "white" : "#f9fafb"};
+    props.$isToday
+      ? themeColors[props.$theme].dayCellToday
+      : props.$isCurrentMonth
+      ? themeColors[props.$theme].dayCellBg
+      : themeColors[props.$theme].dayCellOtherMonth};
 `;
 
 const DateNumber = styled.div<{
   $isCurrentMonth: boolean;
   $dayType: "sunday" | "saturday" | "weekday";
   $isToday: boolean;
+  $theme: Theme;
 }>`
   padding: 0.25rem;
   text-align: right;
@@ -201,14 +240,14 @@ const DateNumber = styled.div<{
   flex-shrink: 0;
   font-weight: ${(props) => (props.$isToday ? "700" : "400")};
   color: ${(props) => {
-    if (!props.$isCurrentMonth) return "#9ca3af";
+    if (!props.$isCurrentMonth) return themeColors[props.$theme].textMuted;
     if (props.$dayType === "sunday") return "#ef4444";
     if (props.$dayType === "saturday") return "#3b82f6";
-    return "#374151";
+    return themeColors[props.$theme].textPrimary;
   }};
 `;
 
-const EventsContainer = styled.div`
+const EventsContainer = styled.div<{ $theme: Theme }>`
   flex: 1;
   overflow-y: auto;
   padding: 0 0.25rem 0.25rem;
@@ -216,7 +255,8 @@ const EventsContainer = styled.div`
 
   /* Custom scrollbar */
   scrollbar-width: thin;
-  scrollbar-color: #d1d5db transparent;
+  scrollbar-color: ${(props) => themeColors[props.$theme].scrollbarThumb}
+    transparent;
 
   &::-webkit-scrollbar {
     width: 4px;
@@ -225,7 +265,7 @@ const EventsContainer = styled.div`
     background: transparent;
   }
   &::-webkit-scrollbar-thumb {
-    background-color: #d1d5db;
+    background-color: ${(props) => themeColors[props.$theme].scrollbarThumb};
     border-radius: 2px;
   }
 `;
@@ -272,6 +312,18 @@ const RecommendStar = styled.span`
   align-items: center;
 `;
 
+const RegionSelector = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const RegionLabel = styled.span<{ $theme: Theme }>`
+  font-size: 0.75rem;
+  color: ${(props) => themeColors[props.$theme].textSecondary};
+  white-space: nowrap;
+`;
+
 // ============ Types & Constants ============
 
 interface CalendarEvent {
@@ -281,7 +333,8 @@ interface CalendarEvent {
   movie: Movie;
 }
 
-const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
+const WEEKDAYS_KO = ["일", "월", "화", "수", "목", "금", "토"];
+const WEEKDAYS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const getDayType = (dayOfWeek: number): "sunday" | "saturday" | "weekday" => {
   if (dayOfWeek === 0) return "sunday";
@@ -292,20 +345,34 @@ const getDayType = (dayOfWeek: number): "sunday" | "saturday" | "weekday" => {
 // ============ Component ============
 
 export default function MovieCalendar() {
+  const theme = useSettingsStore((state) => state.theme);
+  const language = useSettingsStore((state) => state.language);
+  const region = useSettingsStore((state) => state.region);
+  const setRegion = useSettingsStore((state) => state.setRegion);
+  const t = useSettingsStore((state) => state.t);
+  const getRegionName = useSettingsStore((state) => state.getRegionName);
   const [currentDate, setCurrentDate] = useState(new Date(2026, 0, 1));
   const [movies, setMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [loadedMonths, setLoadedMonths] = useState<Set<string>>(new Set());
 
+  const weekdays = language === "ko" ? WEEKDAYS_KO : WEEKDAYS_EN;
+
   const fetchMoviesForMonth = useCallback(
-    async (year: number, month: number) => {
-      const monthKey = `${year}-${month}`;
+    async (year: number, month: number, lang: ApiLanguage, reg: ApiRegion) => {
+      const monthKey = `${year}-${month}-${lang}-${reg}`;
       if (loadedMonths.has(monthKey)) return;
 
       setLoading(true);
       try {
-        const newMovies = await getUpcomingMovies(year, month);
+        const newMovies = await getUpcomingMovies(year, month, lang, reg);
+        // 현재 설정과 일치하는지 확인 (race condition 방지)
+        const currentLang = useSettingsStore.getState().language;
+        const currentReg = useSettingsStore.getState().region;
+        if (lang !== currentLang || reg !== currentReg) {
+          return; // 설정이 변경되었으면 결과 무시
+        }
         setMovies((prev) => {
           const existingIds = new Set(prev.map((m) => m.id));
           const uniqueNewMovies = newMovies.filter(
@@ -323,17 +390,19 @@ export default function MovieCalendar() {
     [loadedMonths]
   );
 
+  // 언어 또는 지역 변경 시 영화 데이터 리셋
   useEffect(() => {
-    fetchMoviesForMonth(2026, 1);
-  }, []);
+    setMovies([]);
+    setLoadedMonths(new Set());
+  }, [language, region]);
 
   useEffect(() => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth() + 1;
     if (year >= 2026) {
-      fetchMoviesForMonth(year, month);
+      fetchMoviesForMonth(year, month, language, region as ApiRegion);
     }
-  }, [currentDate, fetchMoviesForMonth]);
+  }, [currentDate, fetchMoviesForMonth, language, region]);
 
   const events: CalendarEvent[] = useMemo(() => {
     return movies
@@ -357,7 +426,7 @@ export default function MovieCalendar() {
     });
 
     // 각 날짜별로 추천 영화를 최상단에 정렬
-    grouped.forEach((dayEvents, dateKey) => {
+    grouped.forEach((dayEvents) => {
       dayEvents.sort((a, b) => {
         const aRecommended = isRecommended(a.movie);
         const bRecommended = isRecommended(b.movie);
@@ -385,46 +454,72 @@ export default function MovieCalendar() {
     return days;
   }, [currentDate]);
 
+  const formatMonthTitle = () => {
+    if (language === "ko") {
+      return format(currentDate, "yyyy년 M월", { locale: ko });
+    }
+    return format(currentDate, "MMMM yyyy", { locale: enUS });
+  };
+
   return (
     <Container>
-      <Header>
-        <Title>영화 개봉 캘린더</Title>
+      <Header $theme={theme}>
+        <Title $theme={theme}>{t("header.title")}</Title>
         <HeaderRight>
-          {loading && <LoadingText>로딩 중...</LoadingText>}
+          {loading && (
+            <LoadingText $theme={theme}>{t("header.loading")}</LoadingText>
+          )}
           <Legend>
             <LegendItem>
               <LegendDot $color="#3b82f6" />
-              <LegendLabel>일반</LegendLabel>
+              <LegendLabel $theme={theme}>{t("header.general")}</LegendLabel>
             </LegendItem>
             <LegendItem>
               <LegendDot $color="#10b981" />
-              <LegendLabel>주인장 추천</LegendLabel>
+              <LegendLabel $theme={theme}>
+                {t("header.recommended")}
+              </LegendLabel>
             </LegendItem>
           </Legend>
+          <RegionSelector>
+            <RegionLabel $theme={theme}>{t("settings.region")}</RegionLabel>
+            <Select
+              $theme={theme}
+              value={region}
+              onChange={(e) => setRegion(e.target.value as Region)}
+            >
+              {REGIONS.map((r) => (
+                <option key={r.code} value={r.code}>
+                  {getRegionName(r.code)}
+                </option>
+              ))}
+            </Select>
+          </RegionSelector>
         </HeaderRight>
       </Header>
 
-      <CalendarContainer>
-        <Toolbar>
+      <CalendarContainer $theme={theme}>
+        <Toolbar $theme={theme}>
           <ButtonGroup>
             <NavButton
+              $theme={theme}
               onClick={() => setCurrentDate(subMonths(currentDate, 1))}
             >
-              이전
+              {t("nav.prev")}
             </NavButton>
             <NavButton
+              $theme={theme}
               onClick={() => setCurrentDate(addMonths(currentDate, 1))}
             >
-              다음
+              {t("nav.next")}
             </NavButton>
           </ButtonGroup>
 
-          <MonthTitle>
-            {format(currentDate, "yyyy년 M월", { locale: ko })}
-          </MonthTitle>
+          <MonthTitle $theme={theme}>{formatMonthTitle()}</MonthTitle>
 
           <ButtonGroup>
             <Select
+              $theme={theme}
               value={currentDate.getFullYear()}
               onChange={(e) =>
                 setCurrentDate(
@@ -434,11 +529,13 @@ export default function MovieCalendar() {
             >
               {[2026, 2027, 2028, 2029, 2030].map((year) => (
                 <option key={year} value={year}>
-                  {year}년
+                  {year}
+                  {t("nav.year")}
                 </option>
               ))}
             </Select>
             <Select
+              $theme={theme}
               value={currentDate.getMonth()}
               onChange={(e) =>
                 setCurrentDate(
@@ -452,16 +549,18 @@ export default function MovieCalendar() {
             >
               {Array.from({ length: 12 }, (_, i) => (
                 <option key={i} value={i}>
-                  {i + 1}월
+                  {language === "ko"
+                    ? `${i + 1}월`
+                    : format(new Date(2000, i, 1), "MMMM", { locale: enUS })}
                 </option>
               ))}
             </Select>
           </ButtonGroup>
         </Toolbar>
 
-        <WeekdayHeader>
-          {WEEKDAYS.map((day, index) => (
-            <WeekdayCell key={day} $dayType={getDayType(index)}>
+        <WeekdayHeader $theme={theme}>
+          {weekdays.map((day, index) => (
+            <WeekdayCell key={day} $dayType={getDayType(index)} $theme={theme}>
               {day}
             </WeekdayCell>
           ))}
@@ -479,16 +578,18 @@ export default function MovieCalendar() {
                 key={index}
                 $isCurrentMonth={isCurrentMonth}
                 $isToday={isToday(day)}
+                $theme={theme}
               >
                 <DateNumber
                   $isCurrentMonth={isCurrentMonth}
                   $dayType={getDayType(dayOfWeek)}
                   $isToday={isToday(day)}
+                  $theme={theme}
                 >
                   {format(day, "d")}
                 </DateNumber>
 
-                <EventsContainer>
+                <EventsContainer $theme={theme}>
                   {dayEvents.map((event) => {
                     const recommended = isRecommended(event.movie);
                     return (
@@ -498,7 +599,7 @@ export default function MovieCalendar() {
                         onClick={() => setSelectedMovie(event.movie)}
                         data-tooltip-id="recommend-tooltip"
                         data-tooltip-content={
-                          recommended ? "주인장 추천!" : undefined
+                          recommended ? t("tooltip.recommended") : undefined
                         }
                       >
                         {event.movie.poster_path && (
@@ -522,6 +623,8 @@ export default function MovieCalendar() {
           })}
         </CalendarGrid>
       </CalendarContainer>
+
+      <Footer />
 
       <Tooltip
         id="recommend-tooltip"
