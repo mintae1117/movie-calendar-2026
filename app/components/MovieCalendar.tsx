@@ -289,6 +289,10 @@ const RECOMMENDED_MOVIES = [
   "Project Y",
   "노 머시: 90분",
   "No Mercy: 90 Minutes",
+  "어벤져스: 둠스데이",
+  "Avengers: Doomsday",
+  "듄: 파트 3",
+  "Dune: Part Three",
 ];
 
 const isRecommended = (movie: Movie): boolean => {
@@ -511,7 +515,11 @@ export default function MovieCalendar() {
                           />
                         )}
                         <EventTitle>{event.title}</EventTitle>
-                        {recommended && <RecommendStar><FaStar /></RecommendStar>}
+                        {recommended && (
+                          <RecommendStar>
+                            <FaStar />
+                          </RecommendStar>
+                        )}
                       </EventItem>
                     );
                   })}
