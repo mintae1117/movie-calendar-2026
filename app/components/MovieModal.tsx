@@ -124,6 +124,7 @@ const TitleArea = styled.div<{ $theme: Theme }>`
   padding: 1.5rem 1.5rem 0.7rem 0;
   flex-shrink: 0;
   position: relative;
+  min-height: 100px;
 
   &::after {
     content: "";
@@ -141,6 +142,7 @@ const TitleArea = styled.div<{ $theme: Theme }>`
   @media (min-width: 768px) {
     margin-left: 11rem;
     padding: 1.5rem 1.5rem 2rem 0.7rem;
+    min-height: 120px;
 
     &::after {
       left: -11rem;

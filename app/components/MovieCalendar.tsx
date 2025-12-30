@@ -16,7 +16,7 @@ import {
 } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { Tooltip } from "react-tooltip";
-import { FaStar } from "react-icons/fa";
+import { FaStar, FaSun, FaMoon } from "react-icons/fa";
 import {
   Movie,
   getUpcomingMovies,
@@ -33,7 +33,6 @@ import {
   REGIONS,
 } from "../lib/store";
 import MovieModal from "./MovieModal";
-import Footer from "./Footer";
 
 const Container = styled.div`
   flex: 1;
@@ -61,7 +60,7 @@ const Title = styled.h1<{ $theme: Theme }>`
 const HeaderRight = styled.div`
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem;
   flex-wrap: wrap;
 `;
 
@@ -306,16 +305,53 @@ const RecommendStar = styled.span`
   align-items: center;
 `;
 
-const RegionSelector = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+const ToggleContainer = styled.div<{ $theme: Theme }>`
+  display: inline-flex;
+  height: 1.75rem;
+  background-color: ${(props) =>
+    props.$theme === "dark"
+      ? "rgba(55, 65, 81, 0.8)"
+      : "rgba(243, 244, 246, 0.9)"};
+  border: 1px solid ${(props) => themeColors[props.$theme].selectBorder};
+  border-radius: 0.375rem;
+  padding: 2px;
+  gap: 2px;
 `;
 
-const RegionLabel = styled.span<{ $theme: Theme }>`
-  font-size: 0.75rem;
-  color: ${(props) => themeColors[props.$theme].textSecondary};
-  white-space: nowrap;
+const ToggleButton = styled.button<{ $isActive: boolean; $theme: Theme }>`
+  padding: 0 0.5rem;
+  height: 100%;
+  border-radius: 0.25rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: all 0.15s ease-in-out;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+
+  background-color: ${(props) =>
+    props.$isActive
+      ? props.$theme === "dark"
+        ? "rgba(30, 30, 46, 0.9)"
+        : "rgba(255, 255, 255, 0.95)"
+      : "transparent"};
+  color: ${(props) =>
+    props.$isActive
+      ? themeColors[props.$theme].textPrimary
+      : themeColors[props.$theme].textMuted};
+  box-shadow: ${(props) =>
+    props.$isActive ? "0 1px 2px 0 rgba(0, 0, 0, 0.1)" : "none"};
+
+  &:hover {
+    color: ${(props) => themeColors[props.$theme].textPrimary};
+  }
+
+  &:focus {
+    outline: none;
+  }
 `;
 
 // ============ Types & Constants ============
@@ -342,6 +378,8 @@ export default function MovieCalendar() {
   const theme = useSettingsStore((state) => state.theme);
   const language = useSettingsStore((state) => state.language);
   const region = useSettingsStore((state) => state.region);
+  const setTheme = useSettingsStore((state) => state.setTheme);
+  const setLanguage = useSettingsStore((state) => state.setLanguage);
   const setRegion = useSettingsStore((state) => state.setRegion);
   const t = useSettingsStore((state) => state.t);
   const getRegionName = useSettingsStore((state) => state.getRegionName);
@@ -352,6 +390,13 @@ export default function MovieCalendar() {
   const [loadedMonths, setLoadedMonths] = useState<Set<string>>(new Set());
 
   const weekdays = language === "ko" ? WEEKDAYS_KO : WEEKDAYS_EN;
+
+  // 테마 변경 시 body 스타일 업데이트
+  useEffect(() => {
+    document.body.style.backgroundColor =
+      theme === "dark" ? "#000000" : "#ffffff";
+    document.body.style.color = theme === "dark" ? "#ededed" : "#171717";
+  }, [theme]);
 
   const fetchMoviesForMonth = useCallback(
     async (year: number, month: number, lang: ApiLanguage, reg: ApiRegion) => {
@@ -468,27 +513,58 @@ export default function MovieCalendar() {
               <LegendDot $color="#3b82f6" />
               <LegendLabel $theme={theme}>{t("header.general")}</LegendLabel>
             </LegendItem>
-            <LegendItem>
+            <LegendItem className="mr-1.5">
               <LegendDot $color="#10b981" />
               <LegendLabel $theme={theme}>
                 {t("header.recommended")}
               </LegendLabel>
             </LegendItem>
           </Legend>
-          <RegionSelector>
-            <RegionLabel $theme={theme}>{t("settings.region")}</RegionLabel>
-            <Select
+          <Select
+            $theme={theme}
+            value={region}
+            onChange={(e) => setRegion(e.target.value as Region)}
+          >
+            {REGIONS.map((r) => (
+              <option key={r.code} value={r.code}>
+                {getRegionName(r.code)} {language === "ko" ? "개봉" : "Release"}
+              </option>
+            ))}
+          </Select>
+          <ToggleContainer $theme={theme}>
+            <ToggleButton
+              $isActive={language === "ko"}
               $theme={theme}
-              value={region}
-              onChange={(e) => setRegion(e.target.value as Region)}
+              onClick={() => setLanguage("ko")}
             >
-              {REGIONS.map((r) => (
-                <option key={r.code} value={r.code}>
-                  {getRegionName(r.code)}
-                </option>
-              ))}
-            </Select>
-          </RegionSelector>
+              한국어
+            </ToggleButton>
+            <ToggleButton
+              $isActive={language === "en"}
+              $theme={theme}
+              onClick={() => setLanguage("en")}
+            >
+              EN
+            </ToggleButton>
+          </ToggleContainer>
+          <ToggleContainer $theme={theme}>
+            <ToggleButton
+              $isActive={theme === "light"}
+              $theme={theme}
+              onClick={() => setTheme("light")}
+              title="Light"
+            >
+              <FaSun size={12} />
+            </ToggleButton>
+            <ToggleButton
+              $isActive={theme === "dark"}
+              $theme={theme}
+              onClick={() => setTheme("dark")}
+              title="Dark"
+            >
+              <FaMoon size={12} />
+            </ToggleButton>
+          </ToggleContainer>
         </HeaderRight>
       </Header>
 
@@ -617,8 +693,6 @@ export default function MovieCalendar() {
           })}
         </CalendarGrid>
       </CalendarContainer>
-
-      <Footer />
 
       <Tooltip
         id="recommend-tooltip"
