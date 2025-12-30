@@ -361,6 +361,33 @@ const ToggleButton = styled.button<{ $isActive: boolean; $theme: Theme }>`
   }
 `;
 
+const MonthInput = styled.input<{ $theme: Theme }>`
+  padding: 0.25rem 0.5rem;
+  border: 1px solid ${(props) => themeColors[props.$theme].selectBorder};
+  border-radius: 0.375rem;
+  background: ${(props) => themeColors[props.$theme].selectBg};
+  color: ${(props) => themeColors[props.$theme].selectText};
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.2s;
+
+  &:hover {
+    border-color: #3b82f6;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: #3b82f6;
+  }
+
+  /* 다크모드에서 달력 아이콘 색상 */
+  &::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    filter: ${(props) => (props.$theme === "dark" ? "invert(1)" : "none")};
+  }
+`;
+
 // ============ Types & Constants ============
 
 interface CalendarEvent {
@@ -390,7 +417,7 @@ export default function MovieCalendar() {
   const setRegion = useSettingsStore((state) => state.setRegion);
   const t = useSettingsStore((state) => state.t);
   const getRegionName = useSettingsStore((state) => state.getRegionName);
-  const [currentDate, setCurrentDate] = useState(new Date(2026, 0, 1));
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [movies, setMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
@@ -456,9 +483,7 @@ export default function MovieCalendar() {
   useEffect(() => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth() + 1;
-    if (year >= 2026) {
-      fetchMoviesForMonth(year, month, language, region as ApiRegion);
-    }
+    fetchMoviesForMonth(year, month, language, region as ApiRegion);
   }, [currentDate, fetchMoviesForMonth, language, region]);
 
   const events: CalendarEvent[] = useMemo(() => {
@@ -605,45 +630,17 @@ export default function MovieCalendar() {
 
           <MonthTitle $theme={theme}>{formatMonthTitle()}</MonthTitle>
 
-          <ButtonGroup>
-            <Select
-              $theme={theme}
-              value={currentDate.getFullYear()}
-              onChange={(e) =>
-                setCurrentDate(
-                  new Date(parseInt(e.target.value), currentDate.getMonth(), 1)
-                )
+          <MonthInput
+            $theme={theme}
+            type="month"
+            value={format(currentDate, "yyyy-MM")}
+            onChange={(e) => {
+              const [year, month] = e.target.value.split("-").map(Number);
+              if (year && month) {
+                setCurrentDate(new Date(year, month - 1, 1));
               }
-            >
-              {[2026, 2027, 2028, 2029, 2030].map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                  {t("nav.year")}
-                </option>
-              ))}
-            </Select>
-            <Select
-              $theme={theme}
-              value={currentDate.getMonth()}
-              onChange={(e) =>
-                setCurrentDate(
-                  new Date(
-                    currentDate.getFullYear(),
-                    parseInt(e.target.value),
-                    1
-                  )
-                )
-              }
-            >
-              {Array.from({ length: 12 }, (_, i) => (
-                <option key={i} value={i}>
-                  {language === "ko"
-                    ? `${i + 1}월`
-                    : format(new Date(2000, i, 1), "MMMM", { locale: enUS })}
-                </option>
-              ))}
-            </Select>
-          </ButtonGroup>
+            }}
+          />
         </Toolbar>
 
         <WeekdayHeader $theme={theme}>

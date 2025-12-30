@@ -24,8 +24,8 @@ const translations: Record<Language, Record<string, string>> = {
     // Header
     "header.title": "더무비 캘린더",
     "header.loading": "로딩 중...",
-    "header.general": "개봉 예정 작품",
-    "header.recommended": "추천 작품",
+    "header.general": "개봉작",
+    "header.recommended": "추천작",
 
     // Navigation
     "nav.prev": "이전",
@@ -94,7 +94,7 @@ const translations: Record<Language, Record<string, string>> = {
     "settings.language": "Language",
     "settings.dark": "Dark",
     "settings.light": "Light",
-    "settings.region": "Release Region",
+    "settings.region": "Region",
   },
 };
 
@@ -156,7 +156,7 @@ export const themeColors = {
     // Day cell
     dayCellBg: "#ffffff",
     dayCellOtherMonth: "#f9fafb",
-    dayCellToday: "#eff6ff",
+    dayCellToday: "#E9F2FE",
     dayCellBorder: "#e5e7eb",
     // Buttons
     buttonBg: "#ffffff",
