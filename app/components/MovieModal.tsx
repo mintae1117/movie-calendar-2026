@@ -30,7 +30,7 @@ const ModalContainer = styled.div<{ $theme: Theme }>`
   border-radius: 1rem;
   max-width: 48rem;
   width: 100%;
-  max-height: 70vh;
+  max-height: 80vh;
   overflow: hidden;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   border: 1px solid ${(props) => themeColors[props.$theme].calendarBorder};
@@ -112,10 +112,10 @@ const CloseButton = styled.button`
 const ContentArea = styled.div`
   display: flex;
   flex-direction: column;
-  max-height: calc(90vh - 12rem);
+  max-height: calc(80vh - 12rem);
 
   @media (min-width: 768px) {
-    max-height: calc(90vh - 16rem);
+    max-height: calc(80vh - 16rem);
   }
 `;
 
