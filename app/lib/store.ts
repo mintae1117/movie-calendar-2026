@@ -22,10 +22,10 @@ export const REGIONS: { code: Region; nameKo: string; nameEn: string }[] = [
 const translations: Record<Language, Record<string, string>> = {
   ko: {
     // Header
-    "header.title": "영화 개봉 캘린더",
+    "header.title": "더무비 캘린더",
     "header.loading": "로딩 중...",
-    "header.general": "일반",
-    "header.recommended": "주인장 추천",
+    "header.general": "개봉 예정 작품",
+    "header.recommended": "추천 작품",
 
     // Navigation
     "nav.prev": "이전",
@@ -49,7 +49,7 @@ const translations: Record<Language, Record<string, string>> = {
     "modal.minute": "분",
 
     // Tooltip
-    "tooltip.recommended": "주인장 추천!",
+    "tooltip.recommended": "추천하는 작품!",
 
     // Settings
     "settings.theme": "테마",
@@ -60,10 +60,10 @@ const translations: Record<Language, Record<string, string>> = {
   },
   en: {
     // Header
-    "header.title": "Movie Release Calendar",
+    "header.title": "TMDB Moive Calendar",
     "header.loading": "Loading...",
-    "header.general": "General",
-    "header.recommended": "Recommended",
+    "header.general": "Upcoming Movies",
+    "header.recommended": "Recommended Movies",
 
     // Navigation
     "nav.prev": "Prev",

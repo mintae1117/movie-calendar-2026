@@ -52,9 +52,11 @@ const Header = styled.div<{ $theme: Theme }>`
 `;
 
 const Title = styled.h1<{ $theme: Theme }>`
+  font-family: var(--font-poppins), var(--font-noto-sans-kr), sans-serif;
   font-size: 1.5rem;
   font-weight: 700;
   color: ${(props) => themeColors[props.$theme].textPrimary};
+  letter-spacing: -0.02em;
 `;
 
 const HeaderRight = styled.div`
@@ -667,15 +669,47 @@ export default function MovieCalendar() {
                 <EventsContainer $theme={theme}>
                   {dayEvents.map((event) => {
                     const recommended = isRecommended(event.movie);
+                    const releaseDate = new Date(event.movie.release_date);
+                    const formattedDate =
+                      language === "ko"
+                        ? format(releaseDate, "yyyy년 M월 d일", { locale: ko })
+                        : format(releaseDate, "MMM d, yyyy", { locale: enUS });
+
+                    const tooltipHtml = `
+                      <div style="display: flex; gap: 10px; align-items: flex-start; max-width: 280px;">
+                        ${
+                          event.movie.poster_path
+                            ? `<img src="${getPosterUrl(
+                                event.movie.poster_path,
+                                "w185"
+                              )}" style="width: 50px; border-radius: 4px;" />`
+                            : ""
+                        }
+                        <div style="flex: 1;">
+                          <div style="font-weight: 600; font-size: 13px; margin-bottom: 4px;">${
+                            event.title
+                          }</div>
+                          <div style="font-size: 11px; opacity: 0.9;">${formattedDate}</div>
+                          ${
+                            recommended
+                              ? `<div style="font-size: 11px; margin-top: 4px;">★ ${t(
+                                  "tooltip.recommended"
+                                )} ★</div>`
+                              : ""
+                          }
+                        </div>
+                      </div>
+                    `;
+
                     return (
                       <EventItem
                         key={event.id}
                         $isRecommended={recommended}
                         onClick={() => setSelectedMovie(event.movie)}
-                        data-tooltip-id="recommend-tooltip"
-                        data-tooltip-content={
-                          recommended ? t("tooltip.recommended") : undefined
+                        data-tooltip-id={
+                          recommended ? "recommend-tooltip" : "general-tooltip"
                         }
+                        data-tooltip-html={tooltipHtml}
                       >
                         {event.movie.poster_path && (
                           <EventPoster
@@ -700,14 +734,27 @@ export default function MovieCalendar() {
       </CalendarContainer>
 
       <Tooltip
+        id="general-tooltip"
+        place="top"
+        style={{
+          backgroundColor: "#3b82f6",
+          color: "white",
+          borderRadius: "10px",
+          padding: "10px 12px",
+          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+          zIndex: 9999,
+        }}
+      />
+      <Tooltip
         id="recommend-tooltip"
         place="top"
         style={{
           backgroundColor: "#10b981",
           color: "white",
-          fontWeight: "bold",
-          borderRadius: "8px",
-          padding: "8px 12px",
+          borderRadius: "10px",
+          padding: "10px 12px",
+          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+          zIndex: 9999,
         }}
       />
 
