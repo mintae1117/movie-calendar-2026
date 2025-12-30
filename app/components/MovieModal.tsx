@@ -30,7 +30,7 @@ const ModalContainer = styled.div<{ $theme: Theme }>`
   border-radius: 1rem;
   max-width: 48rem;
   width: 100%;
-  max-height: 90vh;
+  max-height: 70vh;
   overflow: hidden;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   border: 1px solid ${(props) => themeColors[props.$theme].calendarBorder};
