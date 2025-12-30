@@ -5,11 +5,13 @@ import MovieCalendar from "./components/MovieCalendar";
 import { useSettingsStore, themeColors } from "./lib/store";
 
 const PageContainer = styled.div<{ $bg: string }>`
-  min-height: 100vh;
+  height: 100vh;
   background: ${(props) => props.$bg};
   padding: 0.75rem;
   transition: 0.3s ease;
   overflow-x: auto;
+  display: flex;
+  flex-direction: column;
 
   @media (min-width: 768px) {
     padding: 1rem;
@@ -17,6 +19,8 @@ const PageContainer = styled.div<{ $bg: string }>`
 `;
 
 const ContentWrapper = styled.div`
+  flex: 1;
+  min-height: 0;
   min-width: 1000px;
   width: 100%;
   max-width: 90rem;

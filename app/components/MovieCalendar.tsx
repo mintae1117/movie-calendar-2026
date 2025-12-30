@@ -105,6 +105,8 @@ const LegendLabel = styled.span<{ $theme: Theme }>`
 `;
 
 const CalendarContainer = styled.div<{ $theme: Theme }>`
+  flex: 1;
+  min-height: 0;
   background-color: ${(props) => themeColors[props.$theme].calendarBg};
   border-radius: 0.5rem;
   box-shadow: ${(props) => themeColors[props.$theme].calendarShadow};
@@ -196,9 +198,12 @@ const WeekdayCell = styled.div<{
 `;
 
 const CalendarGrid = styled.div`
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  grid-auto-rows: minmax(100px, 120px);
+  grid-auto-rows: 1fr;
 `;
 
 const DayCell = styled.div<{
