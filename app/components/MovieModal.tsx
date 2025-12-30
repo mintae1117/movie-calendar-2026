@@ -76,15 +76,11 @@ const PosterContainer = styled.div`
 `;
 
 const PosterImage = styled.img<{ $theme: Theme }>`
-  width: 5.5rem;
+  width: 7rem;
+  border-width: 4px;
   border-radius: 0.5rem;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
   border: 3px solid ${(props) => themeColors[props.$theme].modalBg};
-
-  @media (min-width: 480px) {
-    width: 7rem;
-    border-width: 4px;
-  }
 
   @media (min-width: 768px) {
     width: 9rem;
@@ -124,8 +120,8 @@ const ContentArea = styled.div`
 `;
 
 const TitleArea = styled.div<{ $theme: Theme }>`
-  margin-left: 7rem;
-  padding: 1.25rem 1rem 1rem 0;
+  margin-left: 9rem;
+  padding: 1.5rem 1.5rem 0.7rem 0;
   flex-shrink: 0;
   position: relative;
 
@@ -133,8 +129,8 @@ const TitleArea = styled.div<{ $theme: Theme }>`
     content: "";
     position: absolute;
     bottom: 0;
-    left: -7rem;
-    right: -1rem;
+    left: -9rem;
+    right: -1.5rem;
     height: 1px;
     background: ${(props) =>
       props.$theme === "dark"
@@ -142,18 +138,9 @@ const TitleArea = styled.div<{ $theme: Theme }>`
         : "linear-gradient(to right, transparent, rgba(0,0,0,0.08) 20%, rgba(0,0,0,0.08) 80%, transparent)"};
   }
 
-  @media (min-width: 480px) {
-    margin-left: 9rem;
-    padding: 1.5rem 1.5rem 1rem 0;
-
-    &::after {
-      left: -9rem;
-      right: -1.5rem;
-    }
-  }
-
   @media (min-width: 768px) {
     margin-left: 11rem;
+    padding: 1.5rem 1.5rem 2rem 0.7rem;
 
     &::after {
       left: -11rem;
@@ -228,16 +215,11 @@ const ScrollableArea = styled.div<{ $theme: Theme }>`
 `;
 
 const InfoArea = styled.div`
-  margin-top: 3rem;
+  margin-top: 1.3rem;
   padding: 0 1rem 1.5rem 1rem;
 
-  @media (min-width: 480px) {
-    margin-top: 4rem;
-    padding: 0 1.5rem 1.5rem 1.5rem;
-  }
-
   @media (min-width: 768px) {
-    margin-top: 5rem;
+    margin-top: 1rem;
   }
 `;
 
