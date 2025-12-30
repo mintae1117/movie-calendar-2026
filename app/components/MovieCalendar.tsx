@@ -395,8 +395,19 @@ export default function MovieCalendar() {
   const [loading, setLoading] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [loadedMonths, setLoadedMonths] = useState<Set<string>>(new Set());
+  const [isMobile, setIsMobile] = useState(false);
 
   const weekdays = language === "ko" ? WEEKDAYS_KO : WEEKDAYS_EN;
+
+  // 모바일 감지
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // 테마 변경 시 body 스타일 업데이트
   useEffect(() => {
@@ -707,9 +718,13 @@ export default function MovieCalendar() {
                         $isRecommended={recommended}
                         onClick={() => setSelectedMovie(event.movie)}
                         data-tooltip-id={
-                          recommended ? "recommend-tooltip" : "general-tooltip"
+                          isMobile
+                            ? undefined
+                            : recommended
+                            ? "recommend-tooltip"
+                            : "general-tooltip"
                         }
-                        data-tooltip-html={tooltipHtml}
+                        data-tooltip-html={isMobile ? undefined : tooltipHtml}
                       >
                         {event.movie.poster_path && (
                           <EventPoster
@@ -733,30 +748,34 @@ export default function MovieCalendar() {
         </CalendarGrid>
       </CalendarContainer>
 
-      <Tooltip
-        id="general-tooltip"
-        place="top"
-        style={{
-          backgroundColor: "#3b82f6",
-          color: "white",
-          borderRadius: "10px",
-          padding: "10px 12px",
-          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-          zIndex: 9999,
-        }}
-      />
-      <Tooltip
-        id="recommend-tooltip"
-        place="top"
-        style={{
-          backgroundColor: "#10b981",
-          color: "white",
-          borderRadius: "10px",
-          padding: "10px 12px",
-          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-          zIndex: 9999,
-        }}
-      />
+      {!isMobile && (
+        <>
+          <Tooltip
+            id="general-tooltip"
+            place="top"
+            style={{
+              backgroundColor: "#3b82f6",
+              color: "white",
+              borderRadius: "10px",
+              padding: "10px 12px",
+              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+              zIndex: 9999,
+            }}
+          />
+          <Tooltip
+            id="recommend-tooltip"
+            place="top"
+            style={{
+              backgroundColor: "#10b981",
+              color: "white",
+              borderRadius: "10px",
+              padding: "10px 12px",
+              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+              zIndex: 9999,
+            }}
+          />
+        </>
+      )}
 
       {selectedMovie && (
         <MovieModal
