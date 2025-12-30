@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import styled from "styled-components";
 import { FaSun, FaMoon } from "react-icons/fa";
 import { useSettingsStore, themeColors, Theme } from "../lib/store";
@@ -62,17 +63,15 @@ export default function Footer() {
   const setTheme = useSettingsStore((state) => state.setTheme);
   const setLanguage = useSettingsStore((state) => state.setLanguage);
 
+  useEffect(() => {
+    document.body.style.backgroundColor =
+      theme === "dark" ? "#000000" : "#ffffff";
+    document.body.style.color = theme === "dark" ? "#ededed" : "#171717";
+  }, [theme]);
+
   return (
     <FooterContainer $theme={theme}>
       <ToggleContainer $theme={theme}>
-        <ToggleButton
-          $isActive={theme === "dark"}
-          $theme={theme}
-          onClick={() => setTheme("dark")}
-          title="Dark"
-        >
-          <FaMoon size={12} />
-        </ToggleButton>
         <ToggleButton
           $isActive={theme === "light"}
           $theme={theme}
@@ -80,6 +79,14 @@ export default function Footer() {
           title="Light"
         >
           <FaSun size={12} />
+        </ToggleButton>
+        <ToggleButton
+          $isActive={theme === "dark"}
+          $theme={theme}
+          onClick={() => setTheme("dark")}
+          title="Dark"
+        >
+          <FaMoon size={12} />
         </ToggleButton>
       </ToggleContainer>
       <ToggleContainer $theme={theme}>

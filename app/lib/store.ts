@@ -103,7 +103,7 @@ const translations: Record<Language, Record<string, string>> = {
 export const themeColors = {
   dark: {
     // Page
-    pageBg: "linear-gradient(to bottom right, #1a1a2e, #16213e)",
+    pageBg: "black",
     // Calendar container
     calendarBg: "#1e1e2e",
     calendarBorder: "#374151",
@@ -139,7 +139,7 @@ export const themeColors = {
   },
   light: {
     // Page
-    pageBg: "linear-gradient(to bottom right, #f8fafc, #eff6ff)",
+    pageBg: "white",
     // Calendar container
     calendarBg: "#ffffff",
     calendarBorder: "#e5e7eb",
