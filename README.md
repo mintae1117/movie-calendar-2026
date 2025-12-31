@@ -1,12 +1,18 @@
-# Movie Calendar 2026
+# Movie Calendar
 
 A web application that displays upcoming movie release dates in a calendar format. [Visit Site](https://movie-calendar-2026.vercel.app/)
 
 ## Features
 
 - **Calendar View**: View movie releases by month in a clean calendar layout
-- **Movie Details**: Click on any movie to see detailed information (poster, overview, runtime, genres, etc.)
-- **Recommended Movies**: Special highlight for recommended movies with star icon
+- **Movie Details**: Click on any movie to see detailed information (poster, overview, runtime, genres, production companies, etc.)
+- **Trailer Playback**: Watch movie trailers directly in the modal by clicking the play button on the backdrop image
+- **Movie Search**: Search for any movie using the search bar and view its details
+- **Recommended Movies**: Special highlight for recommended movies with star icon and green color
+- **Multi-Region Support**: Filter movies by release region (Korea, USA, Japan, UK, France, Germany, or All)
+- **Multi-Language Support**: Switch between Korean and English interface
+- **Dark/Light Mode**: Toggle between dark and light themes
+- **Today Highlight**: Current date is highlighted with a blue circle
 - **Responsive Design**: Works on desktop and mobile devices
 - **TMDb Integration**: Real-time movie data from The Movie Database API
 
@@ -16,6 +22,7 @@ A web application that displays upcoming movie release dates in a calendar forma
 | ------------- | -------------------------------- |
 | Framework     | Next.js 15                       |
 | Styling       | Styled Components + Tailwind CSS |
+| State         | Zustand                          |
 | Icons         | React Icons                      |
 | Date Handling | date-fns                         |
 | Tooltips      | React Tooltip                    |
@@ -27,49 +34,57 @@ A web application that displays upcoming movie release dates in a calendar forma
 ```
 app/
 ├── components/
-│   ├── MovieCalendar.tsx  # Main calendar component
-│   └── MovieModal.tsx     # Movie details modal
+│   ├── MovieCalendar.tsx  # Main calendar component with search
+│   └── MovieModal.tsx     # Movie details modal with trailer
 ├── lib/
-│   ├── tmdb.ts            # TMDb API functions
+│   ├── tmdb.ts            # TMDb API functions (movies, search, videos)
+│   ├── store.ts           # Zustand store (theme, language, region)
+│   ├── recommendedMovies.ts # Recommended movies list
 │   └── registry.tsx       # styled-components SSR
 └── page.tsx               # Main page
 ```
 
----
+## Screenshots
 
-# 영화 개봉 캘린더 2026
+### Calendar View
 
-2026년 이후 영화 개봉 일정을 캘린더 형식으로 보여주는 웹 애플리케이션입니다. [방문하기](https://movie-calendar-2026.vercel.app/)
+- Clean monthly calendar layout
+- Movies displayed on their release dates
+- Recommended movies highlighted in green, general releases in gray
+- Navigation buttons with month/year display
+- Movie search and month picker in toolbar
 
-## 기능
+### Movie Modal
 
-- **캘린더 뷰**: 월별로 영화 개봉 일정을 깔끔한 캘린더 레이아웃으로 확인
-- **영화 상세정보**: 영화 클릭 시 포스터, 줄거리, 러닝타임, 장르 등 상세 정보 표시
-- **추천 영화**: 주인장 추천 영화는 별 아이콘으로 특별 표시
-- **반응형 디자인**: 데스크톱과 모바일 모두 지원
-- **TMDb 연동**: The Movie Database API를 통한 실시간 영화 데이터
+- Large backdrop image with play button for trailer
+- Movie poster, title, and tagline
+- Release date, runtime, and rating badges
+- Genre tags
+- Overview/synopsis
+- Production companies
 
-## 기술 스택
+## Getting Started
 
-| 분류       | 기술                             |
-| ---------- | -------------------------------- |
-| 프레임워크 | Next.js 15                       |
-| 스타일링   | Styled Components + Tailwind CSS |
-| 아이콘     | React Icons                      |
-| 날짜 처리  | date-fns                         |
-| 툴팁       | React Tooltip                    |
-| 언어       | TypeScript                       |
-| API        | TMDb (The Movie Database)        |
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Create `.env.local` file with your TMDb API key:
+   ```
+   NEXT_PUBLIC_TMDB_API_KEY=your_api_key_here
+   ```
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
+5. Open [http://localhost:3000](http://localhost:3000)
 
-## 프로젝트 구조
+## API
 
-```
-app/
-├── components/
-│   ├── MovieCalendar.tsx  # 메인 캘린더 컴포넌트
-│   └── MovieModal.tsx     # 영화 상세 모달
-├── lib/
-│   ├── tmdb.ts            # TMDb API 함수
-│   └── registry.tsx       # styled-components SSR
-└── page.tsx               # 메인 페이지
-```
+This project uses [The Movie Database (TMDb) API](https://www.themoviedb.org/documentation/api) for:
+
+- Fetching upcoming movies by release date and region
+- Getting movie details (runtime, genres, production companies)
+- Searching movies by title
+- Fetching movie trailers and videos
