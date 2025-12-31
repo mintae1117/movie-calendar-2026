@@ -5,7 +5,10 @@ import styled, { keyframes } from "styled-components";
 import {
   Movie,
   MovieDetails,
+  MovieVideo,
   getMovieDetails,
+  getMovieVideos,
+  getMainTrailer,
   getPosterUrl,
   getBackdropUrl,
   ApiLanguage,
@@ -61,6 +64,71 @@ const BackdropOverlay = styled.div`
   position: absolute;
   inset: 0;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+`;
+
+const PlayButton = styled.button`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 4rem;
+  height: 4rem;
+  background-color: rgba(0, 0, 0, 0.6);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 15;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.8);
+    transform: translate(-50%, -50%) scale(1.1);
+    border-color: white;
+  }
+
+  @media (min-width: 768px) {
+    width: 5rem;
+    height: 5rem;
+  }
+`;
+
+const VideoContainer = styled.div`
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background-color: black;
+`;
+
+const VideoIframe = styled.iframe`
+  width: 100%;
+  height: 100%;
+  border: none;
+`;
+
+const VideoCloseButton = styled.button`
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 2rem;
+  height: 2rem;
+  background-color: rgba(0, 0, 0, 0.7);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  z-index: 25;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.9);
+  }
 `;
 
 const PosterContainer = styled.div`
@@ -363,12 +431,18 @@ export default function MovieModal({ movie, onClose }: MovieModalProps) {
   const t = useSettingsStore((state) => state.t);
   const [details, setDetails] = useState<MovieDetails | null>(null);
   const [loading, setLoading] = useState(true);
+  const [trailer, setTrailer] = useState<MovieVideo | null>(null);
+  const [isPlayingTrailer, setIsPlayingTrailer] = useState(false);
 
   useEffect(() => {
     const fetchDetails = async () => {
       try {
-        const data = await getMovieDetails(movie.id, language as ApiLanguage);
-        setDetails(data);
+        const [detailsData, videosData] = await Promise.all([
+          getMovieDetails(movie.id, language as ApiLanguage),
+          getMovieVideos(movie.id, language as ApiLanguage),
+        ]);
+        setDetails(detailsData);
+        setTrailer(getMainTrailer(videosData));
       } catch (error) {
         console.error("Failed to fetch movie details:", error);
       } finally {
@@ -425,12 +499,58 @@ export default function MovieModal({ movie, onClose }: MovieModalProps) {
     <Overlay $theme={theme} onClick={onClose}>
       <ModalContainer $theme={theme} onClick={(e) => e.stopPropagation()}>
         <BackdropContainer>
-          {movie.backdrop_path ? (
-            <BackdropImage src={getBackdropUrl(movie.backdrop_path)} alt="" />
+          {isPlayingTrailer && trailer ? (
+            <VideoContainer>
+              <VideoIframe
+                src={`https://www.youtube.com/embed/${trailer.key}?autoplay=1&rel=0`}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+              <VideoCloseButton onClick={() => setIsPlayingTrailer(false)}>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </VideoCloseButton>
+            </VideoContainer>
           ) : (
-            <BackdropFallback />
+            <>
+              {movie.backdrop_path ? (
+                <BackdropImage
+                  src={getBackdropUrl(movie.backdrop_path)}
+                  alt=""
+                />
+              ) : (
+                <BackdropFallback />
+              )}
+              <BackdropOverlay />
+
+              {trailer && (
+                <PlayButton onClick={() => setIsPlayingTrailer(true)}>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="28"
+                    height="28"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </PlayButton>
+              )}
+            </>
           )}
-          <BackdropOverlay />
 
           <PosterContainer>
             <PosterImage

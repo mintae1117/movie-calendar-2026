@@ -111,3 +111,80 @@ export function getBackdropUrl(
   if (!path) return "";
   return `https://image.tmdb.org/t/p/${size}${path}`;
 }
+
+export interface MovieVideo {
+  id: string;
+  key: string;
+  name: string;
+  site: string;
+  type: string;
+  official: boolean;
+}
+
+export async function getMovieVideos(
+  movieId: number,
+  language: ApiLanguage = "ko"
+): Promise<MovieVideo[]> {
+  const langCode = getApiLanguageCode(language);
+  const url = `${TMDB_BASE_URL}/movie/${movieId}/videos?api_key=${TMDB_API_KEY}&language=${langCode}`;
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error("Failed to fetch movie videos");
+  }
+
+  const data = await response.json();
+  let videos: MovieVideo[] = data.results || [];
+
+  // 한국어로 영상이 없으면 영어로 다시 시도
+  if (videos.length === 0 && language === "ko") {
+    const enUrl = `${TMDB_BASE_URL}/movie/${movieId}/videos?api_key=${TMDB_API_KEY}&language=en-US`;
+    const enResponse = await fetch(enUrl);
+    if (enResponse.ok) {
+      const enData = await enResponse.json();
+      videos = enData.results || [];
+    }
+  }
+
+  return videos;
+}
+
+export function getMainTrailer(videos: MovieVideo[]): MovieVideo | null {
+  // YouTube 영상만 필터링
+  const youtubeVideos = videos.filter((v) => v.site === "YouTube");
+
+  // 우선순위: Official Trailer > Trailer > Teaser > 기타
+  const officialTrailer = youtubeVideos.find(
+    (v) => v.type === "Trailer" && v.official
+  );
+  if (officialTrailer) return officialTrailer;
+
+  const trailer = youtubeVideos.find((v) => v.type === "Trailer");
+  if (trailer) return trailer;
+
+  const teaser = youtubeVideos.find((v) => v.type === "Teaser");
+  if (teaser) return teaser;
+
+  // 아무 YouTube 영상이라도 반환
+  return youtubeVideos[0] || null;
+}
+
+export async function searchMovies(
+  query: string,
+  language: ApiLanguage = "ko"
+): Promise<Movie[]> {
+  if (!query.trim()) return [];
+
+  const langCode = getApiLanguageCode(language);
+  const url = `${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&language=${langCode}&query=${encodeURIComponent(
+    query
+  )}&page=1`;
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error("Failed to search movies");
+  }
+
+  const data: TMDbResponse = await response.json();
+  return data.results;
+}

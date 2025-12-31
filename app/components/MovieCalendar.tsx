@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import styled from "styled-components";
 import {
   format,
@@ -16,10 +16,11 @@ import {
 } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { Tooltip } from "react-tooltip";
-import { FaStar, FaSun, FaMoon } from "react-icons/fa";
+import { FaStar, FaSun, FaMoon, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import {
   Movie,
   getUpcomingMovies,
+  searchMovies,
   getPosterUrl,
   ApiLanguage,
   ApiRegion,
@@ -127,6 +128,12 @@ const Toolbar = styled.div<{ $theme: Theme }>`
   flex-shrink: 0;
 `;
 
+const ToolbarLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+`;
+
 const ButtonGroup = styled.div`
   display: flex;
   align-items: center;
@@ -143,6 +150,9 @@ const NavButton = styled.button<{ $theme: Theme }>`
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 
   &:hover {
     background-color: ${(props) => themeColors[props.$theme].buttonHover};
@@ -153,6 +163,7 @@ const MonthTitle = styled.h2<{ $theme: Theme }>`
   font-size: 1.25rem;
   font-weight: 600;
   color: ${(props) => themeColors[props.$theme].textPrimary};
+  margin-left: 10px;
 `;
 
 const Select = styled.select<{ $theme: Theme }>`
@@ -240,11 +251,32 @@ const DateNumber = styled.div<{
   flex-shrink: 0;
   font-weight: ${(props) => (props.$isToday ? "700" : "400")};
   color: ${(props) => {
+    if (props.$isToday) return "white";
     if (!props.$isCurrentMonth) return themeColors[props.$theme].textMuted;
     if (props.$dayType === "sunday") return "#ef4444";
     if (props.$dayType === "saturday") return "#3b82f6";
     return themeColors[props.$theme].textPrimary;
   }};
+
+  /* 오늘 날짜 표시를 위한 컨테이너 */
+  display: flex;
+  justify-content: flex-end;
+
+  /* 날짜 숫자를 span처럼 동작하도록 */
+  & > span {
+    ${(props) =>
+      props.$isToday
+        ? `
+      background-color: #3b82f6;
+      border-radius: 50%;
+      width: 1.7rem;
+      height: 1.7rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    `
+        : ""}
+  }
 `;
 
 const EventsContainer = styled.div<{ $theme: Theme }>`
@@ -283,11 +315,11 @@ const EventItem = styled.div<{ $isRecommended: boolean }>`
   gap: 0.25rem;
   overflow: hidden;
   background-color: ${(props) =>
-    props.$isRecommended ? "#10b981" : "#3b82f6"};
+    props.$isRecommended ? "#10b981" : "#6b7280"};
 
   &:hover {
     background-color: ${(props) =>
-      props.$isRecommended ? "#059669" : "#2563eb"};
+      props.$isRecommended ? "#059669" : "#4b5563"};
   }
 `;
 
@@ -388,6 +420,157 @@ const MonthInput = styled.input<{ $theme: Theme }>`
   }
 `;
 
+const ToolbarRight = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const SearchContainer = styled.div`
+  position: relative;
+`;
+
+const SearchInput = styled.input<{ $theme: Theme }>`
+  padding: 0.25rem 0.5rem 0.25rem 2rem;
+  border: 1px solid ${(props) => themeColors[props.$theme].selectBorder};
+  border-radius: 0.375rem;
+  background: ${(props) => themeColors[props.$theme].selectBg};
+  color: ${(props) => themeColors[props.$theme].selectText};
+  font-size: 0.8125rem;
+  font-weight: 500;
+  width: 180px;
+  transition: border-color 0.2s;
+
+  &:hover {
+    border-color: #3b82f6;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: #3b82f6;
+  }
+
+  &::placeholder {
+    color: ${(props) => themeColors[props.$theme].textMuted};
+  }
+`;
+
+const SearchIcon = styled.div<{ $theme: Theme }>`
+  position: absolute;
+  left: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: ${(props) => themeColors[props.$theme].textMuted};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const SearchResults = styled.div<{ $theme: Theme }>`
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 0.25rem;
+  background: ${(props) => themeColors[props.$theme].calendarBg};
+  border: 1px solid ${(props) => themeColors[props.$theme].calendarBorder};
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 100;
+
+  /* Custom scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: ${(props) => themeColors[props.$theme].scrollbarThumb}
+    transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: ${(props) => themeColors[props.$theme].scrollbarThumb};
+    border-radius: 3px;
+  }
+`;
+
+const SearchResultItem = styled.div<{ $theme: Theme }>`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  transition: background-color 0.15s;
+
+  &:hover {
+    background-color: ${(props) =>
+      props.$theme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)"};
+  }
+
+  &:not(:last-child) {
+    border-bottom: 1px solid
+      ${(props) => themeColors[props.$theme].calendarBorder};
+  }
+`;
+
+const SearchResultPoster = styled.img`
+  width: 2.5rem;
+  height: 3.5rem;
+  object-fit: cover;
+  border-radius: 0.25rem;
+  flex-shrink: 0;
+`;
+
+const SearchResultNoPoster = styled.div<{ $theme: Theme }>`
+  width: 2.5rem;
+  height: 3.5rem;
+  background: ${(props) => (props.$theme === "dark" ? "#374151" : "#e5e7eb")};
+  border-radius: 0.25rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: ${(props) => themeColors[props.$theme].textMuted};
+  font-size: 0.625rem;
+`;
+
+const SearchResultInfo = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const SearchResultTitle = styled.div<{ $theme: Theme }>`
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: ${(props) => themeColors[props.$theme].textPrimary};
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const SearchResultYear = styled.div<{ $theme: Theme }>`
+  font-size: 0.75rem;
+  color: ${(props) => themeColors[props.$theme].textMuted};
+  margin-top: 0.125rem;
+`;
+
+const SearchNoResults = styled.div<{ $theme: Theme }>`
+  padding: 1rem;
+  text-align: center;
+  color: ${(props) => themeColors[props.$theme].textMuted};
+  font-size: 0.8125rem;
+`;
+
+const SearchLoading = styled.div<{ $theme: Theme }>`
+  padding: 1rem;
+  text-align: center;
+  color: ${(props) => themeColors[props.$theme].textMuted};
+  font-size: 0.8125rem;
+`;
+
 // ============ Types & Constants ============
 
 interface CalendarEvent {
@@ -423,6 +606,12 @@ export default function MovieCalendar() {
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [loadedMonths, setLoadedMonths] = useState<Set<string>>(new Set());
   const [isMobile, setIsMobile] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Movie[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const weekdays = language === "ko" ? WEEKDAYS_KO : WEEKDAYS_EN;
 
@@ -543,6 +732,64 @@ export default function MovieCalendar() {
     return format(currentDate, "MMMM yyyy", { locale: enUS });
   };
 
+  // 검색 기능
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const query = e.target.value;
+      setSearchQuery(query);
+
+      // 이전 타이머 취소
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+
+      if (!query.trim()) {
+        setSearchResults([]);
+        setShowSearchResults(false);
+        return;
+      }
+
+      setShowSearchResults(true);
+      setIsSearching(true);
+
+      // 디바운스: 300ms 후에 검색 실행
+      searchTimeoutRef.current = setTimeout(async () => {
+        try {
+          const results = await searchMovies(query, language as ApiLanguage);
+          setSearchResults(results.slice(0, 10)); // 최대 10개만 표시
+        } catch (error) {
+          console.error("Search failed:", error);
+          setSearchResults([]);
+        } finally {
+          setIsSearching(false);
+        }
+      }, 300);
+    },
+    [language]
+  );
+
+  const handleSearchResultClick = useCallback((movie: Movie) => {
+    setSelectedMovie(movie);
+    setSearchQuery("");
+    setSearchResults([]);
+    setShowSearchResults(false);
+  }, []);
+
+  // 검색 영역 외부 클릭 시 결과 닫기
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(e.target as Node)
+      ) {
+        setShowSearchResults(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   return (
     <Container>
       <Header $theme={theme}>
@@ -553,7 +800,7 @@ export default function MovieCalendar() {
           )}
           <Legend>
             <LegendItem>
-              <LegendDot $color="#3b82f6" />
+              <LegendDot $color="#6b7280" />
               <LegendLabel $theme={theme}>{t("header.general")}</LegendLabel>
             </LegendItem>
             <LegendItem className="mr-1.5">
@@ -613,34 +860,114 @@ export default function MovieCalendar() {
 
       <CalendarContainer $theme={theme}>
         <Toolbar $theme={theme}>
-          <ButtonGroup>
-            <NavButton
-              $theme={theme}
-              onClick={() => setCurrentDate(subMonths(currentDate, 1))}
-            >
-              {t("nav.prev")}
-            </NavButton>
-            <NavButton
-              $theme={theme}
-              onClick={() => setCurrentDate(addMonths(currentDate, 1))}
-            >
-              {t("nav.next")}
-            </NavButton>
-          </ButtonGroup>
+          <ToolbarLeft>
+            <ButtonGroup>
+              <NavButton
+                $theme={theme}
+                onClick={() => setCurrentDate(subMonths(currentDate, 1))}
+              >
+                <FaChevronLeft size={10} />
+                {t("nav.prev")}
+              </NavButton>
+              <NavButton
+                $theme={theme}
+                onClick={() => setCurrentDate(addMonths(currentDate, 1))}
+              >
+                {t("nav.next")}
+                <FaChevronRight size={10} />
+              </NavButton>
+            </ButtonGroup>
+            <MonthTitle $theme={theme}>{formatMonthTitle()}</MonthTitle>
+          </ToolbarLeft>
 
-          <MonthTitle $theme={theme}>{formatMonthTitle()}</MonthTitle>
+          <ToolbarRight>
+            <SearchContainer ref={searchContainerRef}>
+              <SearchIcon $theme={theme}>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.3-4.3" />
+                </svg>
+              </SearchIcon>
+              <SearchInput
+                $theme={theme}
+                type="text"
+                placeholder={
+                  language === "ko" ? "영화 검색..." : "Search movies..."
+                }
+                value={searchQuery}
+                onChange={handleSearchChange}
+                onFocus={() => searchQuery && setShowSearchResults(true)}
+              />
+              {showSearchResults && (
+                <SearchResults $theme={theme}>
+                  {isSearching ? (
+                    <SearchLoading $theme={theme}>
+                      {language === "ko" ? "검색 중..." : "Searching..."}
+                    </SearchLoading>
+                  ) : searchResults.length > 0 ? (
+                    searchResults.map((movie) => (
+                      <SearchResultItem
+                        key={movie.id}
+                        $theme={theme}
+                        onClick={() => handleSearchResultClick(movie)}
+                      >
+                        {movie.poster_path ? (
+                          <SearchResultPoster
+                            src={getPosterUrl(movie.poster_path, "w185")}
+                            alt=""
+                          />
+                        ) : (
+                          <SearchResultNoPoster $theme={theme}>
+                            No Image
+                          </SearchResultNoPoster>
+                        )}
+                        <SearchResultInfo>
+                          <SearchResultTitle $theme={theme}>
+                            {movie.title}
+                          </SearchResultTitle>
+                          <SearchResultYear $theme={theme}>
+                            {movie.release_date
+                              ? movie.release_date.split("-")[0]
+                              : language === "ko"
+                              ? "개봉일 미정"
+                              : "TBA"}
+                          </SearchResultYear>
+                        </SearchResultInfo>
+                      </SearchResultItem>
+                    ))
+                  ) : (
+                    <SearchNoResults $theme={theme}>
+                      {language === "ko"
+                        ? "검색 결과가 없습니다"
+                        : "No results found"}
+                    </SearchNoResults>
+                  )}
+                </SearchResults>
+              )}
+            </SearchContainer>
 
-          <MonthInput
-            $theme={theme}
-            type="month"
-            value={format(currentDate, "yyyy-MM")}
-            onChange={(e) => {
-              const [year, month] = e.target.value.split("-").map(Number);
-              if (year && month) {
-                setCurrentDate(new Date(year, month - 1, 1));
-              }
-            }}
-          />
+            <MonthInput
+              $theme={theme}
+              type="month"
+              value={format(currentDate, "yyyy-MM")}
+              onChange={(e) => {
+                const [year, month] = e.target.value.split("-").map(Number);
+                if (year && month) {
+                  setCurrentDate(new Date(year, month - 1, 1));
+                }
+              }}
+            />
+          </ToolbarRight>
         </Toolbar>
 
         <WeekdayHeader $theme={theme}>
@@ -671,7 +998,7 @@ export default function MovieCalendar() {
                   $isToday={isToday(day)}
                   $theme={theme}
                 >
-                  {format(day, "d")}
+                  <span>{format(day, "d")}</span>
                 </DateNumber>
 
                 <EventsContainer $theme={theme}>
@@ -751,7 +1078,7 @@ export default function MovieCalendar() {
             id="general-tooltip"
             place="top"
             style={{
-              backgroundColor: "#3b82f6",
+              backgroundColor: "#606673",
               color: "white",
               borderRadius: "10px",
               padding: "10px 12px",
@@ -763,7 +1090,7 @@ export default function MovieCalendar() {
             id="recommend-tooltip"
             place="top"
             style={{
-              backgroundColor: "#10b981",
+              backgroundColor: "#0faa76",
               color: "white",
               borderRadius: "10px",
               padding: "10px 12px",
