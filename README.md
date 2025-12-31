@@ -44,42 +44,6 @@ app/
 └── page.tsx               # Main page
 ```
 
-## Screenshots
-
-### Calendar View
-
-- Clean monthly calendar layout
-- Movies displayed on their release dates
-- Recommended movies highlighted in green, general releases in gray
-- Navigation buttons with month/year display
-- Movie search and month picker in toolbar
-
-### Movie Modal
-
-- Large backdrop image with play button for trailer
-- Movie poster, title, and tagline
-- Release date, runtime, and rating badges
-- Genre tags
-- Overview/synopsis
-- Production companies
-
-## Getting Started
-
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Create `.env.local` file with your TMDb API key:
-   ```
-   NEXT_PUBLIC_TMDB_API_KEY=your_api_key_here
-   ```
-4. Run the development server:
-   ```bash
-   npm run dev
-   ```
-5. Open [http://localhost:3000](http://localhost:3000)
-
 ## API
 
 This project uses [The Movie Database (TMDb) API](https://www.themoviedb.org/documentation/api) for:
