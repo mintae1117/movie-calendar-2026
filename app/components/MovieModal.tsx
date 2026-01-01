@@ -555,7 +555,11 @@ export default function MovieModal({ movie, onClose }: MovieModalProps) {
           <PosterContainer>
             <PosterImage
               $theme={theme}
-              src={getPosterUrl(movie.poster_path, "w342")}
+              src={
+                movie.poster_path
+                  ? getPosterUrl(movie.poster_path, "w342")
+                  : theme === "dark" ? "/noimg-dark.svg" : "/noimg-light.svg"
+              }
               alt={movie.title}
             />
           </PosterContainer>
@@ -595,10 +599,12 @@ export default function MovieModal({ movie, onClose }: MovieModalProps) {
           <ScrollableArea $theme={theme}>
             <InfoArea>
               <BadgeContainer>
-                <Badge $variant="date" $theme={theme}>
-                  {formatDate(movie.release_date)}
-                </Badge>
-                {details?.runtime && details.runtime > 0 && (
+                {movie.release_date && (
+                  <Badge $variant="date" $theme={theme}>
+                    {formatDate(movie.release_date)}
+                  </Badge>
+                )}
+                {details && details.runtime > 0 && (
                   <Badge $variant="runtime" $theme={theme}>
                     {formatRuntime(details.runtime)}
                   </Badge>
