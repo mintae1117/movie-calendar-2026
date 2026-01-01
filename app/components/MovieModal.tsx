@@ -54,10 +54,13 @@ const BackdropImage = styled.img`
   object-fit: cover;
 `;
 
-const BackdropFallback = styled.div`
+const BackdropFallback = styled.div<{ $theme: Theme }>`
   width: 100%;
   height: 100%;
-  background: linear-gradient(to bottom right, #3b82f6, #9333ea);
+  background: ${(props) =>
+    props.$theme === "dark"
+      ? "linear-gradient(to bottom right, #1e3a5f, #312e81)"
+      : "linear-gradient(to bottom right, #93c5fd, #c4b5fd)"};
 `;
 
 const BackdropOverlay = styled.div`
@@ -532,7 +535,7 @@ export default function MovieModal({ movie, onClose }: MovieModalProps) {
                   alt=""
                 />
               ) : (
-                <BackdropFallback />
+                <BackdropFallback $theme={theme} />
               )}
               <BackdropOverlay />
 
