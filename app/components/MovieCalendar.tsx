@@ -16,7 +16,13 @@ import {
 } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { Tooltip } from "react-tooltip";
-import { FaStar, FaSun, FaMoon, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import {
+  FaStar,
+  FaSun,
+  FaMoon,
+  FaChevronLeft,
+  FaChevronRight,
+} from "react-icons/fa";
 import {
   Movie,
   getUpcomingMovies,
@@ -697,10 +703,16 @@ export default function MovieCalendar() {
     });
 
     // 각 날짜별로 추천 영화를 최상단에 정렬
+    // 추천 조건: 수동 추천 OR (평점 7.5+ AND 평가 100+) OR 인기도 300+
+    const checkRecommended = (movie: Movie) =>
+      isRecommended(movie) ||
+      (movie.vote_average >= 7.5 && movie.vote_count >= 100) ||
+      movie.popularity >= 300;
+
     grouped.forEach((dayEvents) => {
       dayEvents.sort((a, b) => {
-        const aRecommended = isRecommended(a.movie);
-        const bRecommended = isRecommended(b.movie);
+        const aRecommended = checkRecommended(a.movie);
+        const bRecommended = checkRecommended(b.movie);
         if (aRecommended && !bRecommended) return -1;
         if (!aRecommended && bRecommended) return 1;
         return 0;
@@ -1003,7 +1015,11 @@ export default function MovieCalendar() {
 
                 <EventsContainer $theme={theme}>
                   {dayEvents.map((event) => {
-                    const recommended = isRecommended(event.movie);
+                    const recommended =
+                      isRecommended(event.movie) ||
+                      (event.movie.vote_average >= 7.5 &&
+                        event.movie.vote_count >= 100) ||
+                      event.movie.popularity >= 300;
                     const releaseDate = new Date(event.movie.release_date);
                     const formattedDate =
                       language === "ko"
@@ -1027,9 +1043,9 @@ export default function MovieCalendar() {
                           <div style="font-size: 11px; opacity: 0.9;">${formattedDate}</div>
                           ${
                             recommended
-                              ? `<div style="font-size: 11px; margin-top: 4px;">★ ${t(
+                              ? `<div style="font-size: 11px; margin-top: 4px;">${t(
                                   "tooltip.recommended"
-                                )} ★</div>`
+                                )}</div>`
                               : ""
                           }
                         </div>

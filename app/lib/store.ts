@@ -60,7 +60,7 @@ const translations: Record<Language, Record<string, string>> = {
   },
   en: {
     // Header
-    "header.title": "TMDB Moive Calendar",
+    "header.title": "The Moive Calendar",
     "header.loading": "Loading...",
     "header.general": "Upcoming Movies",
     "header.recommended": "Recommended Movies",

@@ -53,30 +53,43 @@ export async function getUpcomingMovies(
   const endDate = new Date(year, month, 0).toISOString().split("T")[0];
   const langCode = getApiLanguageCode(language);
 
-  const allMovies: Movie[] = [];
-  let page = 1;
-  let totalPages = 1;
-
-  while (page <= totalPages && page <= 10) {
-    let url: string;
+  const buildUrl = (page: number) => {
     if (region === "ALL") {
-      // 전체: 국가 필터 없이 primary_release_date 사용
-      url = `${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&language=${langCode}&sort_by=popularity.desc&primary_release_date.gte=${startDate}&primary_release_date.lte=${endDate}&page=${page}`;
-    } else {
-      // 특정 국가: region 파라미터와 release_date 사용
-      url = `${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&language=${langCode}&region=${region}&sort_by=popularity.desc&release_date.gte=${startDate}&release_date.lte=${endDate}&with_release_type=2|3&page=${page}`;
+      return `${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&language=${langCode}&sort_by=popularity.desc&primary_release_date.gte=${startDate}&primary_release_date.lte=${endDate}&page=${page}`;
     }
+    return `${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&language=${langCode}&region=${region}&sort_by=popularity.desc&release_date.gte=${startDate}&release_date.lte=${endDate}&with_release_type=2|3&page=${page}`;
+  };
 
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error("Failed to fetch movies");
-    }
-
-    const data: TMDbResponse = await response.json();
-    allMovies.push(...data.results);
-    totalPages = data.total_pages;
-    page++;
+  // 첫 페이지를 먼저 요청하여 총 페이지 수 확인
+  const firstResponse = await fetch(buildUrl(1));
+  if (!firstResponse.ok) {
+    throw new Error("Failed to fetch movies");
   }
+  const firstData: TMDbResponse = await firstResponse.json();
+  const totalPages = Math.min(firstData.total_pages, 10);
+
+  // 나머지 페이지들을 병렬로 요청
+  if (totalPages <= 1) {
+    return firstData.results;
+  }
+
+  const remainingPages = Array.from(
+    { length: totalPages - 1 },
+    (_, i) => i + 2
+  );
+  const remainingResponses = await Promise.all(
+    remainingPages.map((page) =>
+      fetch(buildUrl(page)).then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch movies");
+        return res.json() as Promise<TMDbResponse>;
+      })
+    )
+  );
+
+  const allMovies = [
+    ...firstData.results,
+    ...remainingResponses.flatMap((data) => data.results),
+  ];
 
   return allMovies;
 }
