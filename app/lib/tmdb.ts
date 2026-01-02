@@ -22,6 +22,10 @@ export interface MovieDetails extends Movie {
     name: string;
     logo_path: string | null;
   }[];
+  production_countries: {
+    iso_3166_1: string;
+    name: string;
+  }[];
   budget: number;
   revenue: number;
   tagline: string;

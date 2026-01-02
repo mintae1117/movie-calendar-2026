@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
+import { FaGlobe, FaFilm } from "react-icons/fa";
 import {
   Movie,
   MovieDetails,
@@ -313,7 +314,7 @@ const BadgeContainer = styled.div`
 `;
 
 const Badge = styled.span<{
-  $variant: "date" | "runtime" | "rating" | "region";
+  $variant: "date" | "runtime" | "rating" | "release" | "production";
   $theme: Theme;
 }>`
   padding: 0.25rem 0.75rem;
@@ -342,14 +343,25 @@ const Badge = styled.span<{
           background-color: ${isDark ? "#422006" : "#fef3c7"};
           color: ${isDark ? "#fcd34d" : "#92400e"};
         `;
-      case "region":
+      case "release":
         return `
           background-color: ${isDark ? "#064e3b" : "#d1fae5"};
           color: ${isDark ? "#6ee7b7" : "#065f46"};
           font-weight: 500;
         `;
+      case "production":
+        return `
+          background-color: ${isDark ? "#581c87" : "#f3e8ff"};
+          color: ${isDark ? "#d8b4fe" : "#7c3aed"};
+          font-weight: 500;
+        `;
     }
   }}
+`;
+
+const BadgeLabel = styled.span`
+  opacity: 0.8;
+  font-size: 0.75rem;
 `;
 
 const GenreContainer = styled.div`
@@ -701,45 +713,30 @@ export default function MovieModal({ movie, onClose }: MovieModalProps) {
                     {formatDate(movie.release_date)}
                   </Badge>
                 )}
-                {/* Region badge - show country for the release */}
+                {/* Release country badge - 개봉국 (초록색) */}
                 {region === "ALL" && releaseCountry && (
-                  <Badge $variant="region" $theme={theme}>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <circle cx="12" cy="12" r="10" />
-                      <path d="M2 12h20" />
-                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-                    </svg>
+                  <Badge $variant="release" $theme={theme}>
+                    <FaGlobe size={12} />
+                    <BadgeLabel>{language === "ko" ? "개봉" : "Release"}:</BadgeLabel>
                     {getCountryName(releaseCountry, language)}
                   </Badge>
                 )}
                 {region !== "ALL" && (
-                  <Badge $variant="region" $theme={theme}>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <circle cx="12" cy="12" r="10" />
-                      <path d="M2 12h20" />
-                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-                    </svg>
+                  <Badge $variant="release" $theme={theme}>
+                    <FaGlobe size={12} />
+                    <BadgeLabel>{language === "ko" ? "개봉" : "Release"}:</BadgeLabel>
                     {getRegionName(region)}
+                  </Badge>
+                )}
+                {/* Production country badge - 제작국 (보라색) */}
+                {details?.production_countries && details.production_countries.length > 0 && (
+                  <Badge $variant="production" $theme={theme}>
+                    <FaFilm size={12} />
+                    <BadgeLabel>{language === "ko" ? "제작" : "Made in"}:</BadgeLabel>
+                    {details.production_countries
+                      .slice(0, 2)
+                      .map((c) => getCountryName(c.iso_3166_1, language))
+                      .join(", ")}
                   </Badge>
                 )}
                 {details && details.runtime > 0 && (
