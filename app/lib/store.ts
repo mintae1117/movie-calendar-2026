@@ -5,16 +5,109 @@ import { persist } from "zustand/middleware";
 
 export type Theme = "dark" | "light";
 export type Language = "ko" | "en";
-export type Region = "ALL" | "KR" | "US" | "JP" | "GB" | "FR" | "DE";
+export type Region =
+  | "ALL"
+  | "KR"
+  | "US"
+  | "JP"
+  | "GB"
+  | "FR"
+  | "DE"
+  | "CN"
+  | "TW"
+  | "HK"
+  | "IN"
+  | "AU"
+  | "CA"
+  | "IT"
+  | "ES"
+  | "BR"
+  | "MX"
+  | "RU"
+  | "SE"
+  | "NL"
+  | "BE"
+  | "PL"
+  | "TH"
+  | "SG"
+  | "MY"
+  | "PH"
+  | "ID"
+  | "VN"
+  | "NZ"
+  | "AR"
+  | "CL"
+  | "CO"
+  | "PE"
+  | "ZA"
+  | "EG"
+  | "TR"
+  | "GR"
+  | "PT"
+  | "AT"
+  | "CH"
+  | "DK"
+  | "NO"
+  | "FI"
+  | "IE"
+  | "IL"
+  | "AE"
+  | "SA";
 
 export const REGIONS: { code: Region; nameKo: string; nameEn: string }[] = [
-  { code: "ALL", nameKo: "전체", nameEn: "All" },
+  { code: "ALL", nameKo: "전체", nameEn: "Global" },
+  // Asia
   { code: "KR", nameKo: "한국", nameEn: "South Korea" },
-  { code: "US", nameKo: "미국", nameEn: "United States" },
   { code: "JP", nameKo: "일본", nameEn: "Japan" },
+  { code: "CN", nameKo: "중국", nameEn: "China" },
+  { code: "TW", nameKo: "대만", nameEn: "Taiwan" },
+  { code: "HK", nameKo: "홍콩", nameEn: "Hong Kong" },
+  { code: "IN", nameKo: "인도", nameEn: "India" },
+  { code: "TH", nameKo: "태국", nameEn: "Thailand" },
+  { code: "SG", nameKo: "싱가포르", nameEn: "Singapore" },
+  { code: "MY", nameKo: "말레이시아", nameEn: "Malaysia" },
+  { code: "PH", nameKo: "필리핀", nameEn: "Philippines" },
+  { code: "ID", nameKo: "인도네시아", nameEn: "Indonesia" },
+  { code: "VN", nameKo: "베트남", nameEn: "Vietnam" },
+  // North America
+  { code: "US", nameKo: "미국", nameEn: "United States" },
+  { code: "CA", nameKo: "캐나다", nameEn: "Canada" },
+  { code: "MX", nameKo: "멕시코", nameEn: "Mexico" },
+  // Europe
   { code: "GB", nameKo: "영국", nameEn: "United Kingdom" },
   { code: "FR", nameKo: "프랑스", nameEn: "France" },
   { code: "DE", nameKo: "독일", nameEn: "Germany" },
+  { code: "IT", nameKo: "이탈리아", nameEn: "Italy" },
+  { code: "ES", nameKo: "스페인", nameEn: "Spain" },
+  { code: "PT", nameKo: "포르투갈", nameEn: "Portugal" },
+  { code: "NL", nameKo: "네덜란드", nameEn: "Netherlands" },
+  { code: "BE", nameKo: "벨기에", nameEn: "Belgium" },
+  { code: "AT", nameKo: "오스트리아", nameEn: "Austria" },
+  { code: "CH", nameKo: "스위스", nameEn: "Switzerland" },
+  { code: "SE", nameKo: "스웨덴", nameEn: "Sweden" },
+  { code: "DK", nameKo: "덴마크", nameEn: "Denmark" },
+  { code: "NO", nameKo: "노르웨이", nameEn: "Norway" },
+  { code: "FI", nameKo: "핀란드", nameEn: "Finland" },
+  { code: "PL", nameKo: "폴란드", nameEn: "Poland" },
+  { code: "GR", nameKo: "그리스", nameEn: "Greece" },
+  { code: "IE", nameKo: "아일랜드", nameEn: "Ireland" },
+  { code: "RU", nameKo: "러시아", nameEn: "Russia" },
+  { code: "TR", nameKo: "터키", nameEn: "Turkey" },
+  // Oceania
+  { code: "AU", nameKo: "호주", nameEn: "Australia" },
+  { code: "NZ", nameKo: "뉴질랜드", nameEn: "New Zealand" },
+  // South America
+  { code: "BR", nameKo: "브라질", nameEn: "Brazil" },
+  { code: "AR", nameKo: "아르헨티나", nameEn: "Argentina" },
+  { code: "CL", nameKo: "칠레", nameEn: "Chile" },
+  { code: "CO", nameKo: "콜롬비아", nameEn: "Colombia" },
+  { code: "PE", nameKo: "페루", nameEn: "Peru" },
+  // Middle East & Africa
+  { code: "IL", nameKo: "이스라엘", nameEn: "Israel" },
+  { code: "AE", nameKo: "아랍에미리트", nameEn: "UAE" },
+  { code: "SA", nameKo: "사우디아라비아", nameEn: "Saudi Arabia" },
+  { code: "EG", nameKo: "이집트", nameEn: "Egypt" },
+  { code: "ZA", nameKo: "남아프리카", nameEn: "South Africa" },
 ];
 
 // ============ Translations ============

@@ -37,7 +37,54 @@ export interface TMDbResponse {
 }
 
 export type ApiLanguage = "ko" | "en";
-export type ApiRegion = "ALL" | "KR" | "US" | "JP" | "GB" | "FR" | "DE";
+export type ApiRegion =
+  | "ALL"
+  | "KR"
+  | "US"
+  | "JP"
+  | "GB"
+  | "FR"
+  | "DE"
+  | "CN"
+  | "TW"
+  | "HK"
+  | "IN"
+  | "AU"
+  | "CA"
+  | "IT"
+  | "ES"
+  | "BR"
+  | "MX"
+  | "RU"
+  | "SE"
+  | "NL"
+  | "BE"
+  | "PL"
+  | "TH"
+  | "SG"
+  | "MY"
+  | "PH"
+  | "ID"
+  | "VN"
+  | "NZ"
+  | "AR"
+  | "CL"
+  | "CO"
+  | "PE"
+  | "ZA"
+  | "EG"
+  | "TR"
+  | "GR"
+  | "PT"
+  | "AT"
+  | "CH"
+  | "DK"
+  | "NO"
+  | "FI"
+  | "IE"
+  | "IL"
+  | "AE"
+  | "SA";
 
 const getApiLanguageCode = (lang: ApiLanguage): string => {
   return lang === "ko" ? "ko-KR" : "en-US";
@@ -200,4 +247,68 @@ export async function searchMovies(
 
   const data: TMDbResponse = await response.json();
   return data.results;
+}
+
+// Release dates by country
+export interface ReleaseDate {
+  iso_3166_1: string; // Country code (e.g., "KR", "US")
+  release_dates: {
+    certification: string;
+    release_date: string;
+    type: number; // 1=Premiere, 2=Theatrical (limited), 3=Theatrical, 4=Digital, 5=Physical, 6=TV
+  }[];
+}
+
+export interface ReleaseDatesResponse {
+  id: number;
+  results: ReleaseDate[];
+}
+
+export interface EarliestRelease {
+  country: string;
+  date: string;
+}
+
+export async function getMovieReleaseDates(
+  movieId: number
+): Promise<ReleaseDatesResponse> {
+  const url = `${TMDB_BASE_URL}/movie/${movieId}/release_dates?api_key=${TMDB_API_KEY}`;
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error("Failed to fetch release dates");
+  }
+
+  return response.json();
+}
+
+// Find the earliest theatrical release (type 2 or 3) from release dates
+export function findEarliestRelease(
+  releaseDates: ReleaseDatesResponse,
+  targetDate: string
+): EarliestRelease | null {
+  let earliest: EarliestRelease | null = null;
+
+  for (const country of releaseDates.results) {
+    // Find theatrical releases (type 2 or 3)
+    const theatricalReleases = country.release_dates.filter(
+      (r) => r.type === 2 || r.type === 3
+    );
+
+    for (const release of theatricalReleases) {
+      const releaseDate = release.release_date.split("T")[0];
+
+      // Match with the target date (the movie's release_date from calendar)
+      if (releaseDate === targetDate) {
+        return { country: country.iso_3166_1, date: releaseDate };
+      }
+
+      // Track earliest if no exact match
+      if (!earliest || releaseDate < earliest.date) {
+        earliest = { country: country.iso_3166_1, date: releaseDate };
+      }
+    }
+  }
+
+  return earliest;
 }

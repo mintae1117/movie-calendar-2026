@@ -11,9 +11,12 @@ import {
   getMainTrailer,
   getPosterUrl,
   getBackdropUrl,
+  getMovieReleaseDates,
+  findEarliestRelease,
+  EarliestRelease,
   ApiLanguage,
 } from "../lib/tmdb";
-import { useSettingsStore, themeColors, Theme } from "../lib/store";
+import { useSettingsStore, themeColors, Theme, REGIONS, Region } from "../lib/store";
 
 // ============ Styled Components ============
 
@@ -304,7 +307,7 @@ const BadgeContainer = styled.div`
 `;
 
 const Badge = styled.span<{
-  $variant: "date" | "runtime" | "rating";
+  $variant: "date" | "runtime" | "rating" | "region";
   $theme: Theme;
 }>`
   padding: 0.25rem 0.75rem;
@@ -332,6 +335,12 @@ const Badge = styled.span<{
         return `
           background-color: ${isDark ? "#422006" : "#fef3c7"};
           color: ${isDark ? "#fcd34d" : "#92400e"};
+        `;
+      case "region":
+        return `
+          background-color: ${isDark ? "#064e3b" : "#d1fae5"};
+          color: ${isDark ? "#6ee7b7" : "#065f46"};
+          font-weight: 500;
         `;
     }
   }}
@@ -428,14 +437,75 @@ interface MovieModalProps {
   onClose: () => void;
 }
 
+// Country code to name mapping
+const COUNTRY_NAMES: Record<string, { ko: string; en: string }> = {
+  KR: { ko: "한국", en: "South Korea" },
+  US: { ko: "미국", en: "United States" },
+  JP: { ko: "일본", en: "Japan" },
+  GB: { ko: "영국", en: "United Kingdom" },
+  FR: { ko: "프랑스", en: "France" },
+  DE: { ko: "독일", en: "Germany" },
+  CN: { ko: "중국", en: "China" },
+  TW: { ko: "대만", en: "Taiwan" },
+  HK: { ko: "홍콩", en: "Hong Kong" },
+  IN: { ko: "인도", en: "India" },
+  AU: { ko: "호주", en: "Australia" },
+  CA: { ko: "캐나다", en: "Canada" },
+  IT: { ko: "이탈리아", en: "Italy" },
+  ES: { ko: "스페인", en: "Spain" },
+  BR: { ko: "브라질", en: "Brazil" },
+  MX: { ko: "멕시코", en: "Mexico" },
+  RU: { ko: "러시아", en: "Russia" },
+  SE: { ko: "스웨덴", en: "Sweden" },
+  NL: { ko: "네덜란드", en: "Netherlands" },
+  BE: { ko: "벨기에", en: "Belgium" },
+  PL: { ko: "폴란드", en: "Poland" },
+  TH: { ko: "태국", en: "Thailand" },
+  SG: { ko: "싱가포르", en: "Singapore" },
+  MY: { ko: "말레이시아", en: "Malaysia" },
+  PH: { ko: "필리핀", en: "Philippines" },
+  ID: { ko: "인도네시아", en: "Indonesia" },
+  VN: { ko: "베트남", en: "Vietnam" },
+  NZ: { ko: "뉴질랜드", en: "New Zealand" },
+  AR: { ko: "아르헨티나", en: "Argentina" },
+  CL: { ko: "칠레", en: "Chile" },
+  CO: { ko: "콜롬비아", en: "Colombia" },
+  PE: { ko: "페루", en: "Peru" },
+  ZA: { ko: "남아프리카", en: "South Africa" },
+  EG: { ko: "이집트", en: "Egypt" },
+  TR: { ko: "터키", en: "Turkey" },
+  GR: { ko: "그리스", en: "Greece" },
+  PT: { ko: "포르투갈", en: "Portugal" },
+  AT: { ko: "오스트리아", en: "Austria" },
+  CH: { ko: "스위스", en: "Switzerland" },
+  DK: { ko: "덴마크", en: "Denmark" },
+  NO: { ko: "노르웨이", en: "Norway" },
+  FI: { ko: "핀란드", en: "Finland" },
+  IE: { ko: "아일랜드", en: "Ireland" },
+  IL: { ko: "이스라엘", en: "Israel" },
+  AE: { ko: "아랍에미리트", en: "UAE" },
+  SA: { ko: "사우디아라비아", en: "Saudi Arabia" },
+};
+
+const getCountryName = (code: string, language: string): string => {
+  const country = COUNTRY_NAMES[code];
+  if (country) {
+    return language === "ko" ? country.ko : country.en;
+  }
+  return code;
+};
+
 export default function MovieModal({ movie, onClose }: MovieModalProps) {
   const theme = useSettingsStore((state) => state.theme);
   const language = useSettingsStore((state) => state.language);
+  const region = useSettingsStore((state) => state.region);
   const t = useSettingsStore((state) => state.t);
+  const getRegionName = useSettingsStore((state) => state.getRegionName);
   const [details, setDetails] = useState<MovieDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [trailer, setTrailer] = useState<MovieVideo | null>(null);
   const [isPlayingTrailer, setIsPlayingTrailer] = useState(false);
+  const [releaseCountry, setReleaseCountry] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -446,6 +516,19 @@ export default function MovieModal({ movie, onClose }: MovieModalProps) {
         ]);
         setDetails(detailsData);
         setTrailer(getMainTrailer(videosData));
+
+        // Fetch release dates only for ALL region
+        if (region === "ALL" && movie.release_date) {
+          try {
+            const releaseDatesData = await getMovieReleaseDates(movie.id);
+            const earliest = findEarliestRelease(releaseDatesData, movie.release_date);
+            if (earliest) {
+              setReleaseCountry(earliest.country);
+            }
+          } catch (e) {
+            console.error("Failed to fetch release dates:", e);
+          }
+        }
       } catch (error) {
         console.error("Failed to fetch movie details:", error);
       } finally {
@@ -454,7 +537,7 @@ export default function MovieModal({ movie, onClose }: MovieModalProps) {
     };
 
     fetchDetails();
-  }, [movie.id, language]);
+  }, [movie.id, language, region, movie.release_date]);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -605,6 +688,47 @@ export default function MovieModal({ movie, onClose }: MovieModalProps) {
                 {movie.release_date && (
                   <Badge $variant="date" $theme={theme}>
                     {formatDate(movie.release_date)}
+                  </Badge>
+                )}
+                {/* Region badge - show country for the release */}
+                {region === "ALL" && releaseCountry && (
+                  <Badge $variant="region" $theme={theme}>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M2 12h20" />
+                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                    </svg>
+                    {getCountryName(releaseCountry, language)}
+                  </Badge>
+                )}
+                {region !== "ALL" && (
+                  <Badge $variant="region" $theme={theme}>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M2 12h20" />
+                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                    </svg>
+                    {getRegionName(region)}
                   </Badge>
                 )}
                 {details && details.runtime > 0 && (
