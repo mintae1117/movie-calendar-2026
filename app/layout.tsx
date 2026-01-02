@@ -27,7 +27,7 @@ const notoSansKR = Noto_Sans_KR({
 });
 
 export const metadata: Metadata = {
-  title: "TMDB Moive Calendar",
+  title: "The Moive Calendar",
   description: "개봉 예정인 영화들을 캘린더로 확인해 보세요",
 };
 
