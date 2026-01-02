@@ -99,50 +99,22 @@ export async function getUpcomingMovies(
   const endDate = new Date(year, month, 0).toISOString().split("T")[0];
   const langCode = getApiLanguageCode(language);
 
-  const buildUrl = (page: number) => {
-    const params = new URLSearchParams({
-      action: "upcoming",
-      startDate,
-      endDate,
-      language: langCode,
-      region,
-      page: page.toString(),
-    });
-    return `/api/tmdb?${params.toString()}`;
-  };
+  // 서버에서 모든 페이지를 병렬로 처리 (1번의 API 호출로 모든 데이터 가져옴)
+  const params = new URLSearchParams({
+    action: "upcoming-all",
+    startDate,
+    endDate,
+    language: langCode,
+    region,
+  });
 
-  // 첫 페이지를 먼저 요청하여 총 페이지 수 확인
-  const firstResponse = await fetch(buildUrl(1));
-  if (!firstResponse.ok) {
+  const response = await fetch(`/api/tmdb?${params.toString()}`);
+  if (!response.ok) {
     throw new Error("Failed to fetch movies");
   }
-  const firstData: TMDbResponse = await firstResponse.json();
-  const totalPages = Math.min(firstData.total_pages, 10);
 
-  // 나머지 페이지들을 병렬로 요청
-  if (totalPages <= 1) {
-    return firstData.results;
-  }
-
-  const remainingPages = Array.from(
-    { length: totalPages - 1 },
-    (_, i) => i + 2
-  );
-  const remainingResponses = await Promise.all(
-    remainingPages.map((page) =>
-      fetch(buildUrl(page)).then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch movies");
-        return res.json() as Promise<TMDbResponse>;
-      })
-    )
-  );
-
-  const allMovies = [
-    ...firstData.results,
-    ...remainingResponses.flatMap((data) => data.results),
-  ];
-
-  return allMovies;
+  const data = await response.json();
+  return data.results || [];
 }
 
 export async function getMovieDetails(

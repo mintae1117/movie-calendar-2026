@@ -16,7 +16,13 @@ import {
   EarliestRelease,
   ApiLanguage,
 } from "../lib/tmdb";
-import { useSettingsStore, themeColors, Theme, REGIONS, Region } from "../lib/store";
+import {
+  useSettingsStore,
+  themeColors,
+  Theme,
+  REGIONS,
+  Region,
+} from "../lib/store";
 
 // ============ Styled Components ============
 
@@ -521,7 +527,10 @@ export default function MovieModal({ movie, onClose }: MovieModalProps) {
         if (region === "ALL" && movie.release_date) {
           try {
             const releaseDatesData = await getMovieReleaseDates(movie.id);
-            const earliest = findEarliestRelease(releaseDatesData, movie.release_date);
+            const earliest = findEarliestRelease(
+              releaseDatesData,
+              movie.release_date
+            );
             if (earliest) {
               setReleaseCountry(earliest.country);
             }
@@ -644,7 +653,9 @@ export default function MovieModal({ movie, onClose }: MovieModalProps) {
               src={
                 movie.poster_path
                   ? getPosterUrl(movie.poster_path, "w342")
-                  : theme === "dark" ? "/noimg-dark.svg" : "/noimg-light.svg"
+                  : theme === "dark"
+                  ? "/noimg-dark.svg"
+                  : "/noimg-light.svg"
               }
               alt={movie.title}
             />
