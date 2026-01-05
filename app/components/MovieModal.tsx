@@ -717,28 +717,35 @@ export default function MovieModal({ movie, onClose }: MovieModalProps) {
                 {region === "ALL" && releaseCountry && (
                   <Badge $variant="release" $theme={theme}>
                     <FaGlobe size={12} />
-                    <BadgeLabel>{language === "ko" ? "개봉" : "Release"}:</BadgeLabel>
+                    <BadgeLabel>
+                      {language === "ko" ? "개봉" : "Release"}:
+                    </BadgeLabel>
                     {getCountryName(releaseCountry, language)}
                   </Badge>
                 )}
                 {region !== "ALL" && (
                   <Badge $variant="release" $theme={theme}>
                     <FaGlobe size={12} />
-                    <BadgeLabel>{language === "ko" ? "개봉" : "Release"}:</BadgeLabel>
+                    <BadgeLabel>
+                      {language === "ko" ? "개봉" : "Release"}:
+                    </BadgeLabel>
                     {getRegionName(region)}
                   </Badge>
                 )}
                 {/* Production country badge - 제작국 (보라색) */}
-                {details?.production_countries && details.production_countries.length > 0 && (
-                  <Badge $variant="production" $theme={theme}>
-                    <FaFilm size={12} />
-                    <BadgeLabel>{language === "ko" ? "제작" : "Made in"}:</BadgeLabel>
-                    {details.production_countries
-                      .slice(0, 2)
-                      .map((c) => getCountryName(c.iso_3166_1, language))
-                      .join(", ")}
-                  </Badge>
-                )}
+                {details?.production_countries &&
+                  details.production_countries.length > 0 && (
+                    <Badge $variant="production" $theme={theme}>
+                      <FaFilm size={12} />
+                      <BadgeLabel>
+                        {language === "ko" ? "제작" : "Made in"}:
+                      </BadgeLabel>
+                      {details.production_countries
+                        .slice(0, 2)
+                        .map((c) => getCountryName(c.iso_3166_1, language))
+                        .join(", ")}
+                    </Badge>
+                  )}
                 {details && details.runtime > 0 && (
                   <Badge $variant="runtime" $theme={theme}>
                     {formatRuntime(details.runtime)}
