@@ -1,4 +1,7 @@
-// API calls are now proxied through /api/tmdb to hide API key
+// Direct API calls to TMDB
+
+const TMDB_API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
+const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 
 export interface Movie {
   id: number;
@@ -103,22 +106,39 @@ export async function getUpcomingMovies(
   const endDate = new Date(year, month, 0).toISOString().split("T")[0];
   const langCode = getApiLanguageCode(language);
 
-  // 서버에서 모든 페이지를 병렬로 처리 (1번의 API 호출로 모든 데이터 가져옴)
-  const params = new URLSearchParams({
-    action: "upcoming-all",
-    startDate,
-    endDate,
-    language: langCode,
-    region,
-  });
+  const buildUrl = (page: number) => {
+    if (region === "ALL") {
+      return `${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&language=${langCode}&sort_by=popularity.desc&primary_release_date.gte=${startDate}&primary_release_date.lte=${endDate}&page=${page}`;
+    }
+    return `${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&language=${langCode}&region=${region}&sort_by=popularity.desc&release_date.gte=${startDate}&release_date.lte=${endDate}&with_release_type=2|3&page=${page}`;
+  };
 
-  const response = await fetch(`/api/tmdb?${params.toString()}`);
-  if (!response.ok) {
+  // 첫 페이지로 총 페이지 수 확인
+  const firstResponse = await fetch(buildUrl(1));
+  if (!firstResponse.ok) {
     throw new Error("Failed to fetch movies");
   }
+  const firstData: TMDbResponse = await firstResponse.json();
+  const totalPages = Math.min(firstData.total_pages, 10);
 
-  const data = await response.json();
-  return data.results || [];
+  if (totalPages <= 1) {
+    return firstData.results;
+  }
+
+  // 나머지 페이지 병렬 요청
+  const remainingPages = Array.from({ length: totalPages - 1 }, (_, i) => i + 2);
+  const remainingResponses = await Promise.all(
+    remainingPages.map((page) =>
+      fetch(buildUrl(page)).then((res) => res.json())
+    )
+  );
+
+  const allResults = [
+    ...firstData.results,
+    ...remainingResponses.flatMap((data: TMDbResponse) => data.results || []),
+  ];
+
+  return allResults;
 }
 
 export async function getMovieDetails(
@@ -126,13 +146,9 @@ export async function getMovieDetails(
   language: ApiLanguage = "ko"
 ): Promise<MovieDetails> {
   const langCode = getApiLanguageCode(language);
-  const params = new URLSearchParams({
-    action: "details",
-    movieId: movieId.toString(),
-    language: langCode,
-  });
+  const url = `${TMDB_BASE_URL}/movie/${movieId}?api_key=${TMDB_API_KEY}&language=${langCode}`;
 
-  const response = await fetch(`/api/tmdb?${params.toString()}`);
+  const response = await fetch(url);
   if (!response.ok) {
     throw new Error("Failed to fetch movie details");
   }
@@ -165,35 +181,32 @@ export interface MovieVideo {
   official: boolean;
 }
 
+interface MovieVideosResponse {
+  id: number;
+  results: MovieVideo[];
+}
+
 export async function getMovieVideos(
   movieId: number,
   language: ApiLanguage = "ko"
 ): Promise<MovieVideo[]> {
   const langCode = getApiLanguageCode(language);
-  const params = new URLSearchParams({
-    action: "videos",
-    movieId: movieId.toString(),
-    language: langCode,
-  });
+  const url = `${TMDB_BASE_URL}/movie/${movieId}/videos?api_key=${TMDB_API_KEY}&language=${langCode}`;
 
-  const response = await fetch(`/api/tmdb?${params.toString()}`);
+  const response = await fetch(url);
   if (!response.ok) {
     throw new Error("Failed to fetch movie videos");
   }
 
-  const data = await response.json();
+  const data: MovieVideosResponse = await response.json();
   let videos: MovieVideo[] = data.results || [];
 
   // 한국어로 영상이 없으면 영어로 다시 시도
   if (videos.length === 0 && language === "ko") {
-    const enParams = new URLSearchParams({
-      action: "videos",
-      movieId: movieId.toString(),
-      language: "en-US",
-    });
-    const enResponse = await fetch(`/api/tmdb?${enParams.toString()}`);
+    const enUrl = `${TMDB_BASE_URL}/movie/${movieId}/videos?api_key=${TMDB_API_KEY}&language=en-US`;
+    const enResponse = await fetch(enUrl);
     if (enResponse.ok) {
-      const enData = await enResponse.json();
+      const enData: MovieVideosResponse = await enResponse.json();
       videos = enData.results || [];
     }
   }
@@ -228,13 +241,9 @@ export async function searchMovies(
   if (!query.trim()) return [];
 
   const langCode = getApiLanguageCode(language);
-  const params = new URLSearchParams({
-    action: "search",
-    query,
-    language: langCode,
-  });
+  const url = `${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&language=${langCode}&query=${encodeURIComponent(query)}&page=1`;
 
-  const response = await fetch(`/api/tmdb?${params.toString()}`);
+  const response = await fetch(url);
   if (!response.ok) {
     throw new Error("Failed to search movies");
   }
@@ -266,12 +275,9 @@ export interface EarliestRelease {
 export async function getMovieReleaseDates(
   movieId: number
 ): Promise<ReleaseDatesResponse> {
-  const params = new URLSearchParams({
-    action: "release-dates",
-    movieId: movieId.toString(),
-  });
+  const url = `${TMDB_BASE_URL}/movie/${movieId}/release_dates?api_key=${TMDB_API_KEY}`;
 
-  const response = await fetch(`/api/tmdb?${params.toString()}`);
+  const response = await fetch(url);
   if (!response.ok) {
     throw new Error("Failed to fetch release dates");
   }
