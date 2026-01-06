@@ -7,14 +7,10 @@ import {
   Movie,
   MovieDetails,
   MovieVideo,
-  getMovieDetails,
-  getMovieVideos,
+  getMovieModalData,
   getMainTrailer,
   getPosterUrl,
   getBackdropUrl,
-  getMovieReleaseDates,
-  findEarliestRelease,
-  EarliestRelease,
   ApiLanguage,
 } from "../lib/tmdb";
 import {
@@ -528,28 +524,19 @@ export default function MovieModal({ movie, onClose }: MovieModalProps) {
   useEffect(() => {
     const fetchDetails = async () => {
       try {
-        const [detailsData, videosData] = await Promise.all([
-          getMovieDetails(movie.id, language as ApiLanguage),
-          getMovieVideos(movie.id, language as ApiLanguage),
-        ]);
+        const {
+          details: detailsData,
+          videos,
+          releaseCountry: country,
+        } = await getMovieModalData(
+          movie.id,
+          language as ApiLanguage,
+          region,
+          movie.release_date
+        );
         setDetails(detailsData);
-        setTrailer(getMainTrailer(videosData));
-
-        // Fetch release dates only for ALL region
-        if (region === "ALL" && movie.release_date) {
-          try {
-            const releaseDatesData = await getMovieReleaseDates(movie.id);
-            const earliest = findEarliestRelease(
-              releaseDatesData,
-              movie.release_date
-            );
-            if (earliest) {
-              setReleaseCountry(earliest.country);
-            }
-          } catch (e) {
-            console.error("Failed to fetch release dates:", e);
-          }
-        }
+        setTrailer(getMainTrailer(videos));
+        setReleaseCountry(country);
       } catch (error) {
         console.error("Failed to fetch movie details:", error);
       } finally {
