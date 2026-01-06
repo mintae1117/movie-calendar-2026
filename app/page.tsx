@@ -1,8 +1,9 @@
 "use client";
 
 import styled from "styled-components";
-import MovieCalendar from "./components/MovieCalendar";
-import { useSettingsStore, themeColors } from "./lib/store";
+import MovieCalendar from "./components/Calendar";
+import { useSettingsStore } from "./lib/store";
+import { themeColors } from "./constants";
 
 const PageContainer = styled.div<{ $bg: string }>`
   height: 100vh;
