@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Theme, Language, Region, SettingsStore } from "../types";
+import type { SettingsStore } from "../types";
 import { REGIONS, translations } from "../constants";
 
 // Re-export types and constants for backward compatibility
