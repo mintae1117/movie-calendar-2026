@@ -5,7 +5,7 @@ import { isRecommended as isManuallyRecommended } from "../lib/recommendedMovies
  * Recommendation criteria thresholds
  */
 const RECOMMENDATION_THRESHOLDS = {
-  minVoteAverage: 7.5,
+  minVoteAverage: 7.2,
   minVoteCount: 100,
   minPopularity: 300,
 } as const;
